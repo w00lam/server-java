@@ -4,11 +4,20 @@ info:
   version: 1.0.0
   description: |
     콘서트 예약 서비스 전체 API 명세.
-    인증, 대기열 토큰, 임시 배정(TTL), 결제 트랜잭션, 동시성 오류 등을 모두 포함한 스펙.
-
+    - 인증/로그인 및 queueToken 발급
+    - 콘서트/스케줄/좌석 조회
+    - 좌석 등급(zone) 포함 가격
+    - 임시 예약(TTL 5분)
+    - 결제 트랜잭션
+    - 동시성 충돌 처리 및 에러 코드
 servers:
   - url: https://localhost:8080.v1.api.concert.com
   - url: https://localhost:8080.dev.v1.api.concert.com
+tags:
+  - name: Auth
+  - name: Wallet
+  - name: Concert
+  - name: Payment
 
 components:
   securitySchemes:
@@ -23,7 +32,7 @@ components:
       properties:
         timestamp:
           type: string
-          example: 2025-10-12T10:23:00
+          example: 2025-11-14T10:22:00Z
         status:
           type: integer
           example: 409
@@ -42,19 +51,19 @@ components:
       properties:
         token:
           type: string
-          example: QTK-20251010-001
+          example: QTK-20251114-001
         status:
           type: string
           enum: [WAITING, ACTIVE, EXPIRED]
         expiresAt:
           type: string
-          example: 2025-10-10T10:05:00
+          example: 2025-11-14T10:22:00Z
 
     Wallet:
       type: object
       properties:
         userId:
-          type: string
+          type: long
         balance:
           type: integer
         currency:
@@ -66,10 +75,13 @@ components:
       properties:
         scheduleId:
           type: string
-          example: SCH-20251012
+          example: SCH-20251114
+        concertId:
+          type: string
+          example: CON-202511
         date:
           type: string
-          example: 2025-10-12
+          example: 2025-11-14
         availableSeats:
           type: integer
           example: 45
@@ -82,6 +94,12 @@ components:
         status:
           type: string
           enum: [AVAILABLE, TEMPHOLD, RESERVED]
+        zone:
+          type: string
+          enum: [R, S, VIP]
+        price:
+          type: integer
+          example: 150000
 
     TemporaryReservation:
       type: object
@@ -94,13 +112,13 @@ components:
           example: TEMPORARY
         expiresAt:
           type: string
-          example: 2025-10-10T10:05:00
+          example: 2025-11-14T10:22:00Z
 
     PaymentResult:
       type: object
       properties:
         paymentId:
-          type: string
+          type: long
         status:
           type: string
           enum: [SUCCESS, FAILED]
@@ -119,6 +137,7 @@ paths:
   ##############################
   /auth/login:
     post:
+      tags: [Auth]
       summary: 로그인 & queueToken 발급
       requestBody:
         required: true
@@ -151,19 +170,17 @@ paths:
                     $ref: '#/components/schemas/QueueToken'
         '401':
           description: 인증 실패
-          content: { application/json: { schema: { $ref: '#/components/schemas/ErrorResponse' }}}
         '423':
           description: 계정 잠김
-          content: { application/json: { schema: { $ref: '#/components/schemas/ErrorResponse' }}}
         '429':
           description: 로그인 시도 과도 → Rate-limit
-          content: { application/json: { schema: { $ref: '#/components/schemas/ErrorResponse' }}}
 
   ##############################
   # 2) 지갑 조회
   ##############################
   /wallet/{userId}:
     get:
+      tags: [Wallet]
       summary: 지갑 포인트 조회
       security:
         - BearerAuth: []
@@ -172,7 +189,7 @@ paths:
           name: userId
           required: true
           schema:
-            type: string
+            type: long
       responses:
         '200':
           description: 조회 성공
@@ -182,16 +199,15 @@ paths:
                 $ref: '#/components/schemas/Wallet'
         '404':
           description: 사용자 없음
-          content: { application/json: { schema: { $ref: '#/components/schemas/ErrorResponse' }}}
         '500':
-          description: 서버 오류(DB/Redis)
-          content: { application/json: { schema: { $ref: '#/components/schemas/ErrorResponse' }}}
+          description: 서버 오류
 
   ##############################
   # 3) 충전
   ##############################
-  /wallet/recharge:
+  /wallet/charge:
     post:
+      tags: [Wallet]
       summary: 포인트 충전
       security:
         - BearerAuth: []
@@ -202,7 +218,7 @@ paths:
             schema:
               type: object
               properties:
-                userId: { type: string }
+                userId: { type: long }
                 amount: { type: integer }
                 paymentMethod:
                   type: string
@@ -219,37 +235,46 @@ paths:
                 $ref: '#/components/schemas/Wallet'
         '400':
           description: 유효하지 않은 충전 금액
-          content: { application/json: { schema: { $ref: '#/components/schemas/ErrorResponse' }}}
         '409':
           description: 결제 성공했으나 지갑 업데이트 실패
-          content: { application/json: { schema: { $ref: '#/components/schemas/ErrorResponse' }}}
         '500':
           description: PG 연동 실패
 
   ##############################
-  # 4) 날짜 조회
+  # 4) 콘서트별 날짜 조회
   ##############################
-  /concert/schedules:
+  /concert/{concertId}/schedules:
     get:
-      summary: 예약 가능한 콘서트 날짜 조회
+      tags: [Concert]
+      summary: 특정 콘서트의 예약 가능한 날짜 조회
+      parameters:
+        - in: path
+          name: concertId
+          required: true
+          schema:
+            type: string
+            example: CON-202510
       responses:
         '200':
-          description: 성공
+          description: 조회 성공
           content:
             application/json:
               schema:
                 type: array
                 items:
                   $ref: '#/components/schemas/Schedule'
+        '404':
+          description: 콘서트 없음
         '500':
-          description: 조회 실패
+          description: 서버 오류
 
   ##############################
   # 5) 좌석 조회
   ##############################
   /concert/{scheduleId}/seats:
     get:
-      summary: 예약 가능한 좌석 조회
+      tags: [Concert]
+      summary: 예약 가능한 좌석 조회 (등급/가격 포함)
       parameters:
         - in: path
           name: scheduleId
@@ -263,7 +288,8 @@ paths:
             application/json:
               schema:
                 type: array
-                items: { $ref: '#/components/schemas/Seat' }
+                items:
+                  $ref: '#/components/schemas/Seat'
         '404':
           description: 스케줄 없음
         '500':
@@ -274,7 +300,8 @@ paths:
   ##############################
   /concert/reserve:
     post:
-      summary: 좌석 임시 예약(5분간)
+      tags: [Concert]
+      summary: 좌석 임시 예약(5분간 TTL)
       security:
         - BearerAuth: []
       requestBody:
@@ -284,7 +311,7 @@ paths:
             schema:
               type: object
               properties:
-                userId: { type: string }
+                userId: { type: long }
                 scheduleId: { type: string }
                 seatId: { type: integer }
                 queueToken: { type: string }
@@ -313,6 +340,7 @@ paths:
   ##############################
   /payment/confirm:
     post:
+      tags: [Payment]
       summary: 좌석 결제 및 확정
       security:
         - BearerAuth: []
@@ -323,7 +351,7 @@ paths:
             schema:
               type: object
               properties:
-                userId: { type: string }
+                userId: { type: long }
                 reservationId: { type: string }
                 amount: { type: integer }
                 queueToken: { type: string }
