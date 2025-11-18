@@ -26,14 +26,14 @@
 
 ## 문서
 
-[API 명세서](https://github.com/w00lam/server-java/blob/docs/docs/openapi.yml)
+[API 명세서](https://github.com/w00lam/server-java/blob/feature/docs/docs/openapi.yml)
 
-[ERD](https://github.com/w00lam/server-java/blob/docs/docs/erd.md)
+[ERD](https://github.com/w00lam/server-java/blob/feature/docs/docs/erd.md)
 
-[인프라 구성도](https://github.com/w00lam/server-java/blob/docs/docs/infra.md)
+[인프라 구성도](https://github.com/w00lam/server-java/blobfeature//docs/docs/infra.md)
 
-[시퀀스 다이어그램](https://github.com/w00lam/server-java/blob/docs/docs/ssd.md)
+[시퀀스 다이어그램](https://github.com/w00lam/server-java/blobfeature//docs/docs/ssd.md)
 
-[마일스톤](https://github.com/w00lam/server-java/blob/docs/docs/milestone.md)
+[마일스톤](https://github.com/w00lam/server-java/blobfeature//docs/docs/milestone.md)
 
 ---
