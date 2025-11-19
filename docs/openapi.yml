@@ -2,375 +2,321 @@ openapi: 3.0.4
 info:
   title: Concert Reservation API
   version: 1.0.0
-  description: |
-    콘서트 예약 서비스 전체 API 명세.
-    - 인증/로그인 및 queueToken 발급
-    - 콘서트/스케줄/좌석 조회
-    - 좌석 등급(zone) 포함 가격
-    - 임시 예약(TTL 5분)
-    - 결제 트랜잭션
-    - 동시성 충돌 처리 및 에러 코드
 servers:
-  - url: https://localhost:8080.v1.api.concert.com
-  - url: https://localhost:8080.dev.v1.api.concert.com
-tags:
-  - name: Auth
-  - name: Wallet
-  - name: Concert
-  - name: Payment
+  - url: http://localhost:8080
+    description: Local development server
+  - url: https://v1.api.concert.com
+    description: Production server
 
 components:
-  securitySchemes:
-    BearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
-
   schemas:
     ErrorResponse:
       type: object
       properties:
-        timestamp:
-          type: string
-          example: 2025-11-14T10:22:00Z
-        status:
+        code:
           type: integer
-          example: 409
-        error:
-          type: string
-          example: CONFLICT
         message:
           type: string
-          example: 이미 예약된 좌석입니다.
-        path:
-          type: string
-          example: /concert/reserve
+      required:
+        - code
+        - message
 
-    QueueToken:
+    ConcertDate:
       type: object
       properties:
-        token:
+        date:
           type: string
-          example: QTK-20251114-001
+          format: date
+        remainingSeats:
+          type: integer
+      required:
+        - date
+        - remainingSeats
+
+    ConcertSeat:
+      type: object
+      properties:
+        section:
+          type: string
+        row:
+          type: string
+        number:
+          type: integer
         status:
           type: string
-          enum: [WAITING, ACTIVE, EXPIRED]
-        expiresAt:
-          type: string
-          example: 2025-11-14T10:22:00Z
+          enum: [AVAILABLE, TEMP_HOLD, SOLD]
+      required:
+        - section
+        - row
+        - number
+        - status
 
-    Wallet:
+    ReservationRequest:
       type: object
       properties:
         userId:
-          type: long
-        balance:
-          type: integer
-        currency:
           type: string
-          example: POINT
-
-    Schedule:
-      type: object
-      properties:
-        scheduleId:
-          type: string
-          example: SCH-20251114
+          format: uuid
         concertId:
           type: string
-          example: CON-202511
+          format: uuid
         date:
           type: string
-          example: 2025-11-14
-        availableSeats:
-          type: integer
-          example: 45
+          format: date
+        seats:
+          type: array
+          items:
+            type: string
+      required:
+        - userId
+        - concertId
+        - date
+        - seats
 
-    Seat:
-      type: object
-      properties:
-        seatId:
-          type: integer
-        status:
-          type: string
-          enum: [AVAILABLE, TEMPHOLD, RESERVED]
-        zone:
-          type: string
-          enum: [R, S, VIP]
-        price:
-          type: integer
-          example: 150000
-
-    TemporaryReservation:
+    ReservationResponse:
       type: object
       properties:
         reservationId:
           type: string
-          example: RSV-20251010-003
+          format: uuid
         status:
           type: string
-          example: TEMPORARY
-        expiresAt:
-          type: string
-          example: 2025-11-14T10:22:00Z
+          enum: [PENDING, CONFIRMED, CANCELLED]
+        reservedSeats:
+          type: array
+          items:
+            type: string
+      required:
+        - reservationId
+        - status
+        - reservedSeats
 
-    PaymentResult:
+    PaymentRequest:
+      type: object
+      properties:
+        reservationId:
+          type: string
+          format: uuid
+        amount:
+          type: integer
+      required:
+        - reservationId
+        - amount
+
+    PaymentResponse:
       type: object
       properties:
         paymentId:
-          type: long
+          type: string
+          format: uuid
         status:
           type: string
           enum: [SUCCESS, FAILED]
-        remainingBalance:
-          type: integer
-        message:
-          type: string
-
-security:
-  - BearerAuth: []
+      required:
+        - paymentId
+        - status
 
 paths:
-
-  ##############################
-  # 1) 로그인
-  ##############################
-  /auth/login:
-    post:
-      tags: [Auth]
-      summary: 로그인 & queueToken 발급
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                id:
-                  type: string
-                password:
-                  type: string
-                deviceId:
-                  type: string
-                  example: DEVICE-XYZ123
-      responses:
-        '200':
-          description: 로그인 성공 + queueToken 발급
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  accessToken:
-                    type: string
-                    example: eyJhbGciOiJIUzI1...
-                  refreshToken:
-                    type: string
-                  queueToken:
-                    $ref: '#/components/schemas/QueueToken'
-        '401':
-          description: 인증 실패
-        '423':
-          description: 계정 잠김
-        '429':
-          description: 로그인 시도 과도 → Rate-limit
-
-  ##############################
-  # 2) 지갑 조회
-  ##############################
-  /wallet/{userId}:
+  /concerts:
     get:
-      tags: [Wallet]
-      summary: 지갑 포인트 조회
-      security:
-        - BearerAuth: []
-      parameters:
-        - in: path
-          name: userId
-          required: true
-          schema:
-            type: long
+      summary: List all concerts
       responses:
         '200':
-          description: 조회 성공
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Wallet'
-        '404':
-          description: 사용자 없음
-        '500':
-          description: 서버 오류
-
-  ##############################
-  # 3) 충전
-  ##############################
-  /wallet/charge:
-    post:
-      tags: [Wallet]
-      summary: 포인트 충전
-      security:
-        - BearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                userId: { type: long }
-                amount: { type: integer }
-                paymentMethod:
-                  type: string
-                  example: PG_CARD
-                pgTransactionId:
-                  type: string
-                  example: PG-123123
-      responses:
-        '200':
-          description: 충전 성공
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Wallet'
-        '400':
-          description: 유효하지 않은 충전 금액
-        '409':
-          description: 결제 성공했으나 지갑 업데이트 실패
-        '500':
-          description: PG 연동 실패
-
-  ##############################
-  # 4) 콘서트별 날짜 조회
-  ##############################
-  /concert/{concertId}/schedules:
-    get:
-      tags: [Concert]
-      summary: 특정 콘서트의 예약 가능한 날짜 조회
-      parameters:
-        - in: path
-          name: concertId
-          required: true
-          schema:
-            type: string
-            example: CON-202510
-      responses:
-        '200':
-          description: 조회 성공
+          description: Concert list
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Schedule'
-        '404':
-          description: 콘서트 없음
-        '500':
-          description: 서버 오류
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    title:
+                      type: string
+                    venue:
+                      type: string
+                  required:
+                    - id
+                    - title
+                    - venue
+              example:
+                - id: "550e8400-e29b-41d4-a716-446655440000"
+                  title: "The Live Concert"
+                  venue: "Seoul Arena"
 
-  ##############################
-  # 5) 좌석 조회
-  ##############################
-  /concert/{scheduleId}/seats:
+  /concerts/{id}/dates:
     get:
-      tags: [Concert]
-      summary: 예약 가능한 좌석 조회 (등급/가격 포함)
+      summary: Get available dates for a concert
       parameters:
-        - in: path
-          name: scheduleId
+        - name: id
+          in: path
           required: true
           schema:
             type: string
+            format: uuid
       responses:
         '200':
-          description: 성공
+          description: Available dates
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Seat'
+                  $ref: '#/components/schemas/ConcertDate'
+              example:
+                - date: "2025-12-31"
+                  remainingSeats: 150
         '404':
-          description: 스케줄 없음
-        '500':
-          description: 서버 오류
+          description: Concert not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
-  ##############################
-  # 6) 좌석 임시 예약 (TTL 5분)
-  ##############################
-  /concert/reserve:
+  /concerts/{id}/dates/{date}/seats:
+    get:
+      summary: Get seats for a concert on a specific date
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: date
+          in: path
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: List of seats with status
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ConcertSeat'
+              example:
+                - section: "VIP"
+                  row: "A"
+                  number: 1
+                  status: AVAILABLE
+                - section: "VIP"
+                  row: "A"
+                  number: 2
+                  status: TEMP_HOLD
+                - section: "R"
+                  row: "B"
+                  number: 10
+                  status: RESERVED
+        '404':
+          description: Concert or date not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /reservations:
     post:
-      tags: [Concert]
-      summary: 좌석 임시 예약(5분간 TTL)
-      security:
-        - BearerAuth: []
+      summary: Create a reservation (TEMP_HOLD applied)
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                userId: { type: long }
-                scheduleId: { type: string }
-                seatId: { type: integer }
-                queueToken: { type: string }
+              $ref: '#/components/schemas/ReservationRequest'
+            example:
+              userId: "123e4567-e89b-12d3-a456-426614174000"
+              concertId: "550e8400-e29b-41d4-a716-446655440000"
+              date: "2025-12-31"
+              seats: ["A1", "A2"]
       responses:
-        '200':
-          description: 임시 예약 성공
+        '201':
+          description: Reservation created (TEMP_HOLD)
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TemporaryReservation'
+                $ref: '#/components/schemas/ReservationResponse'
+              example:
+                reservationId: "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+                status: PENDING
+                reservedSeats: ["A1", "A2"]
         '400':
-          description: 잘못된 요청(좌석 번호 범위 등)
-        '401':
-          description: queueToken 인증 실패
-        '403':
-          description: queueToken 상태가 ACTIVE가 아님
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '409':
-          description: 좌석 충돌(이미 임시 배정됨)
-        '410':
-          description: queueToken 만료
-        '500':
-          description: TTL/Lock 설정 실패
+          description: Conflict - seat already held or reserved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
-  ##############################
-  # 7) 결제 (최종 확정)
-  ##############################
-  /payment/confirm:
+  /payments:
     post:
-      tags: [Payment]
-      summary: 좌석 결제 및 확정
-      security:
-        - BearerAuth: []
+      summary: Pay for a reservation (confirms TEMP_HOLD)
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                userId: { type: long }
-                reservationId: { type: string }
-                amount: { type: integer }
-                queueToken: { type: string }
+              $ref: '#/components/schemas/PaymentRequest'
+            example:
+              reservationId: "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+              amount: 300000
       responses:
-        '200':
-          description: 결제 성공
+        '201':
+          description: Payment successful, reservation confirmed
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaymentResult'
-        '401':
-          description: 인증 실패
-        '402':
-          description: 포인트 부족
-        '403':
-          description: 임시예약 상태 아님
-        '404':
-          description: 예약 ID 없음
+                $ref: '#/components/schemas/PaymentResponse'
+              example:
+                paymentId: "9c858901-8a57-4791-81fe-4c455b099bc9"
+                status: SUCCESS
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '409':
-          description: TTL 만료 / 좌석 충돌
-        '500':
-          description: 결제 트랜잭션 실패
+          description: Conflict - reservation expired or already paid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /reservations/{id}/status:
+    get:
+      summary: Get reservation status
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Current reservation status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReservationResponse'
+              example:
+                reservationId: "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+                status: CONFIRMED
+                reservedSeats: ["A1", "A2"]
+        '404':
+          description: Reservation not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
