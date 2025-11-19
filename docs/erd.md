@@ -1,179 +1,315 @@
-# 콘서트 예약 서비스 - DB & ERD
+# 📌 Overview
 
-## 체크리스트
-
-- [ ]  엔터티 나열
-- [ ]  각 엔터티 주요 필드와 제약(필수/유니크/길이)
-- [ ]  관계 정의(1:N, N:M)와 삭제 정책(소프트/하드)
-- [ ]  조회 성능용 인덱스 후보 지정
+이 문서는 콘서트 예약 플랫폼의 핵심 도메인 모델을 설명합니다.
+ERD, 스키마 제약, FK 정책, 인덱스 전략, 예약 상태 전환 규칙을 포함하여
+운영 환경에서 데이터 무결성과 확장성을 보장하기 위한 기준을 제공합니다.
 
 ---
 
-## 1. 테이블 설명과 역할
-
-| 테이블명 | 역할 |
-|----------|------|
-| `CONCERTS` | 공연 정보 (이름, 공연장, 기간) |
-| `SCHEDULES` | 공연 날짜별 스케줄 |
-| `SEATS` | 좌석, 상태 관리 (AVAILABLE/TEMPHOLD/RESERVED) |
-| `SEAT_ZONES` | 좌석 등급(zone)과 가격 |
-| `USERS` | 유저 정보 |
-| `QUEUE_TOKENS` | 로그인 후 발급되는 임시 예약용 토큰 |
-| `WALLETS` | 유저 포인트 정보 |
-| `WALLET_TRANSACTIONS` | 충전/사용 기록 |
-| `RESERVATIONS` | 임시 예약/확정 예약 기록, TTL 관리 |
-| `PAYMENTS` | 결제 트랜잭션 기록 |
-
----
-
-## 2. 컬럼 설명
-
-- **토큰 관련**
-  - `QUEUE_TOKENS.token` ↔ `RESERVATIONS.queueToken`: 동일 값 참조
-  - 상태 필드 의미
-    - `QUEUE_TOKENS.status`: `WAITING` / `ACTIVE` / `EXPIRED`
-    - `RESERVATIONS.status`: `TEMPORARY/HOLD` / `CONFIRMED` / `EXPIRED`
-
-- **좌석 상태**
-  - `SEATS.status`: `AVAILABLE` → `TEMPHOLD` → `RESERVED` → TTL 만료 시 `AVAILABLE`로 복귀
-
-- **TTL**
-  - 임시 예약 TTL: 5분
-  - `RESERVATIONS.expiresAt`과 `QUEUE_TOKENS.expires_at` 컬럼으로 관리
-
----
-
-## 3. ERD
+## 1. ERD Diagram (Mermaid)
 ```mermaid
 erDiagram
-    CONCERTS {
-        string concertId PK "공연 ID"
-        string name "공연 이름"
-        string venue "공연장"
-        date startDate "공연 시작일"
-        date endDate "공연 종료일"
-        datetime created_at "등록일"
-    }
 
     USERS {
-        long id PK
-        string login_id
-        string password
-        datetime created_at
+        uuid id PK
+        string email
+        string name
+        int points
+        datetime createdAt
+        datetime updatedAt
+        bool deleted
     }
 
-    QUEUE_TOKENS {
-        long id PK
-        long user_id FK
-        string token "로그인 시 발급, 임시 예약용"
-        string status "WAITING/ACTIVE/EXPIRED"
-        datetime expires_at "TTL 만료 시간"
-        int position
-        datetime created_at
+    CONCERTS {
+        uuid id PK
+        string title
+        string description
+        datetime createdAt
+        datetime updatedAt
+        bool deleted
     }
 
-    WALLETS {
-        long id PK
-        long user_id FK
-        int balance
-        datetime updated_at
-    }
-
-    WALLET_TRANSACTIONS {
-        long id PK
-        long wallet_id FK
-        int amount
-        string type "CHARGE/USE"
-        datetime created_at
-    }
-
-    SCHEDULES {
-        string scheduleId PK
-        string concertId FK
-        date date
-        int availableSeats
-    }
-
-    SEAT_ZONES {
-        int zoneId PK
-        string zoneName "R/S/VIP"
-        int price "좌석 등급별 가격"
+    CONCERT_DATES {
+        uuid id PK
+        uuid concertId FK
+        date eventDate
+        datetime createdAt
+        datetime updatedAt
+        bool deleted
     }
 
     SEATS {
-        int seatId PK
-        string scheduleId FK
-        int zoneId FK
-        string status "AVAILABLE: 예약 가능, TEMPHOLD: 임시 배정, RESERVED: 결제 확정"
+        uuid id PK
+        uuid concertDateId FK
+        string section
+        string row
+        string number
+        string grade
+        datetime createdAt
+        datetime updatedAt
+        bool deleted
     }
 
     RESERVATIONS {
-        string reservationId PK
-        long userId FK
-        string scheduleId FK
-        int seatId FK
-        string queueToken "QUEUE_TOKENS.token 참조, 임시 예약 시 기록"
-        string status "TEMPORARY/HOLD: 임시 배정, CONFIRMED: 결제 완료, EXPIRED: TTL 만료"
-        datetime expiresAt "임시 예약 만료 시간"
-        datetime created_at
+        uuid id PK
+        uuid userId FK
+        uuid seatId FK
+        string status
+        datetime tempHoldExpiresAt
+        datetime confirmedAt
+        datetime createdAt
+        datetime updatedAt
+        bool deleted
     }
 
     PAYMENTS {
-        long paymentId PK
-        string reservationId FK
-        long userId FK
+        uuid id PK
+        uuid reservationId FK
         int amount
-        string status "SUCCESS/FAILED"
-        datetime created_at
+        string method
+        string status
+        datetime paidAt
+        datetime createdAt
+        datetime updatedAt
+        bool deleted
     }
 
-    %% Relationships
-    CONCERTS ||--o{ SCHEDULES : "has many"
-    SCHEDULES ||--o{ SEATS : "has many"
-    SEATS ||--|| SEAT_ZONES : "zone info"
-    USERS ||--o{ QUEUE_TOKENS : "has many"
-    USERS ||--|| WALLETS : "has one"
-    WALLETS ||--o{ WALLET_TRANSACTIONS : "records"
-    USERS ||--o{ RESERVATIONS : "makes"
-    RESERVATIONS }o--|| SEATS : "assigned to"
-    RESERVATIONS }o--|| SCHEDULES : "for schedule"
-    RESERVATIONS }o--|| USERS : "by user"
-    PAYMENTS }o--|| RESERVATIONS : "from reservation"
-    USERS ||--o{ PAYMENTS : "makes"
-    QUEUE_TOKENS }o--|| USERS : "belongs to"
+    QUEUE_TOKENS {
+        uuid id PK
+        uuid userId FK
+        string token
+        int position
+        datetime createdAt
+        datetime updatedAt
+        bool deleted
+    }
+
+    USERS ||--o{ RESERVATIONS : makes
+    CONCERTS ||--o{ CONCERT_DATES : has
+    CONCERT_DATES ||--o{ SEATS : includes
+    USERS ||--o{ QUEUE_TOKENS : waits
+    SEATS ||--o{ RESERVATIONS : reserved_by
+    RESERVATIONS ||--o{ PAYMENTS : paid_by
 ```
 
 ---
 
-## 4. 동시성 / 제약 사항
+## 2. Table Specification
+### USERS
+| 필드                   | 타입           | 제약               |
+| -------------------- | ------------ | ---------------- |
+| id                   | UUID         | PK               |
+| email                | VARCHAR(255) | UNIQUE, NOT NULL |
+| name                 | VARCHAR(100) | NOT NULL         |
+| points               | INT          | DEFAULT 0        |
+| createdAt, updatedAt | DATETIME     | NOT NULL         |
+| deleted              | BOOLEAN      | soft delete      |
 
-- 임시 예약 중 동일 좌석에 대한 충돌 처리 `409 CONFLICT`
-  
-- TTL 만료 시 상태 자동 갱신
-  
-- 결제 성공 시
-    - `RESERVATIONS.status` → `CONFIRMED`
-    - `SEATS.status` → `RESERVED`
-      
-- 결제 실패 또는 TTL 만료 시 상태 롤백
-  
+
+**인덱스**
+- `email UNIQUE`
+- `(deleted, email)` partial filtering 고려
+
+### CONCERTS
+| 필드                   | 타입           | 제약          |
+| -------------------- | ------------ | ----------- |
+| id                   | UUID         | PK          |
+| title                | VARCHAR(255) | NOT NULL    |
+| description          | TEXT         | NULL        |
+| createdAt, updatedAt | DATETIME     | NOT NULL    |
+| deleted              | BOOLEAN      | soft delete |
+
+### CONCERT_DATES
+| 필드                   | 타입       | 제약                |
+| -------------------- | -------- | ----------------- |
+| id                   | UUID     | PK                |
+| concertId            | UUID     | FK → CONCERTS(id) |
+| eventDate            | DATE     | NOT NULL          |
+| createdAt, updatedAt | DATETIME | NOT NULL          |
+| deleted              | BOOLEAN  |                   |
+
+**FK 정책**
+- `ON DELETE CASCADE` (콘서트 삭제 시 날짜 전체 삭제)
+- `ON UPDATE CASCADE`
+
+### SEATS
+| 필드                   | 타입          | 제약       |
+| -------------------- | ----------- | -------- |
+| id                   | UUID        | PK       |
+| concertDateId        | UUID        | FK       |
+| section              | VARCHAR(20) | NOT NULL |
+| row                  | VARCHAR(5)  | NOT NULL |
+| number               | VARCHAR(5)  | NOT NULL |
+| grade                | VARCHAR(20) | NOT NULL |
+| createdAt, updatedAt | DATETIME    |          |
+| deleted              | BOOLEAN     |          |
+
+
+**UNIQUE 제약**
+- `(concertDateId, section, row, number)` → 동일 날짜 동일 좌석 중복 금지
+
+**추천 인덱스**
+- `concertDateId`
+- `(concertDateId, section)`
+- `(concertDateId, section, row)` (좌석 조회 최적화)
+
+### RESERVATIONS
+| 필드                   | 타입                                                 | 제약       |
+| -------------------- | -------------------------------------------------- | -------- |
+| id                   | UUID                                               | PK       |
+| userId               | UUID                                               | FK       |
+| seatId               | UUID                                               | FK       |
+| status               | ENUM('TEMP_HOLD','CONFIRMED','CANCELED','EXPIRED') | NOT NULL |
+| tempHoldExpiresAt    | DATETIME                                           | NULL     |
+| confirmedAt          | DATETIME                                           | NULL     |
+| createdAt, updatedAt | DATETIME                                           |          |
+| deleted              | BOOLEAN                                            |          |
+
+
+중요 제약 – 좌석 중복 **예약 방지**
+
+⛔ **(seatId, status) UNIQUE** where status IN ('TEMP_HOLD','CONFIRMED')
+
+→ 하나의 seatId는 동시에 1명만 잡을 수 있음
+
+→ CANCELED, EXPIRED는 중복 허용
+
+**FK 정책**
+- `ON DELETE RESTRICT` (좌석 삭제 시 예약 카스케이드 방지)
+- `ON UPDATE CASCADE`
+
+**추천 인덱스**
+- `(userId)`
+- `(seatId, status)`
+- `(status, tempHoldExpiresAt)` → 만료 처리 배치 최적화
+
+### PAYMENTS
+| 필드                   | 타입                                         | 제약       |
+| -------------------- | ------------------------------------------ | -------- |
+| id                   | UUID                                       | PK       |
+| reservationId        | UUID                                       | FK       |
+| amount               | INT                                        | NOT NULL |
+| method               | VARCHAR(20)                                | NOT NULL |
+| status               | ENUM('PENDING','PAID','FAILED','CANCELED') | NOT NULL |
+| paidAt               | DATETIME                                   | NULL     |
+| createdAt, updatedAt | DATETIME                                   |          |
+| deleted              | BOOLEAN                                    |          |
+
+
+**FK 정책**
+- `ON DELETE RESTRICT` (예약 삭제를 결제로 제한)
+
+**추천 인덱스**
+- `(reservationId)`
+- `(status)`
+
+### QUEUE_TOKENS
+| 필드                   | 타입           | 제약               |
+| -------------------- | ------------ | ---------------- |
+| id                   | UUID         | PK               |
+| userId               | UUID         | FK               |
+| token                | VARCHAR(255) | UNIQUE, NOT NULL |
+| position             | INT          | NOT NULL         |
+| createdAt, updatedAt | DATETIME     |                  |
+| deleted              | BOOLEAN      |                  |
+
 ---
 
-## 5. 추가 가능 사항
+## 3. Reservation Status Lifecycle
 
-- 좌석/스케줄별 **총 좌석 수, 남은 좌석 수** 계산 방법
-  
-- 예약 내역/결제 내역 조회 시 `queueToken` 참조
-  
-- DB 인덱스 제안
-    - `USERS.login_id`
-    - `QUEUE_TOKENS.token`
-    - `SEATS.scheduleId + seatId`
-    - `RESERVATIONS.queueToken`, `RESERVATIONS.seatId`
+예약 프로세스는 아래 규칙을 따라 진행됩니다.
+```scss
+TEMP_HOLD → CONFIRMED → (PAID) → 완료
 
-- 추후 확장
-    - 콘서트별 티켓 할인 정책
-    - 프로모션 적용
-    - 좌석 구간별 가변 가격
- 
+TEMP_HOLD → EXPIRED (만료)
+TEMP_HOLD → CANCELED (사용자 취소)
+CONFIRMED → CANCELED (결제 실패)
+```
+
+---
+
+## 4. Transaction Boundary (중요)
+### 4.1 TEMP_HOLD 생성 (좌석 홀딩)
+**트랜잭션 필수**
+1. seatId 중복 체크
+2. reservation 생성(status=TEMP_HOLD)
+3. 임시홀드 만료시간 기록
+
+### 4.2 CONFIRM 단계
+(결제 전 확정)
+- TEMP_HOLD → CONFIRMED
+- 동시에 seatId의 TEMP_HOLD 중복 존재 제거 검사
+
+### 4.3 결제 완료
+- PAYMENTS insert
+- RESERVATIONS.status = CONFIRMED 유지
+
+### 4.4 만료 처리 배치
+- `tempHoldExpiresAt < now`
+- status = EXPIRED 로 변경
+
+---
+
+## 5. Composite Index Recommendations
+### For Seats Lookup
+사용자 좌석 리스트 조회:
+```sql
+SELECT *
+FROM seats
+WHERE concertDateId = ?
+ORDER BY section, row, number;
+```
+👉 인덱스 권장
+- `(concertDateId, section, row, number)`
+
+### For Reservation Hold/Check
+TEMP_HOLD 중복 확인:
+```sql
+SELECT 1
+FROM reservations
+WHERE seatId = ?
+  AND status IN ('TEMP_HOLD','CONFIRMED')
+LIMIT 1;
+```
+👉 인덱스 권장
+- `(seatId, status)`
+
+### For Expiration Batch
+```sql
+SELECT id
+FROM reservations
+WHERE status = 'TEMP_HOLD'
+  AND tempHoldExpiresAt < NOW();
+```
+👉 인덱스 권장
+- `(status, tempHoldExpiresAt)`
+
+---
+
+## 6. Deletion Policy
+### Soft Delete 적용 테이블
+- USERS
+- CONCERTS
+- CONCERT_DATES
+- SEATS
+- RESERVATIONS
+- PAYMENTS
+- QUEUE_TOKENS
+
+### FK 삭제 정책
+| 테이블                      | on delete | 이유                  |
+| ------------------------ | --------- | ------------------- |
+| CONCERT_DATES → CONCERTS | CASCADE   | 상위 공연 지우면 날짜도 제거    |
+| SEATS → CONCERT_DATES    | CASCADE   | 날짜 삭제 시 좌석도 함께 삭제   |
+| RESERVATIONS → SEATS     | RESTRICT  | 예약된 좌석은 승인이므로 삭제 제한 |
+| PAYMENTS → RESERVATIONS  | RESTRICT  | 결제 내역 보호            |
+
+---
+
+## 7. 향후 고려 추가 요소
+- 좌석 가격 정책 테이블(공연 날짜마다 price rule 적용)
+- 배치 서버의 만료 처리 interval 정책
+- 좌석 등급/구역 모델링 확장
+- 대기열 Redis 기반 분산 락 설계
+
 ---
