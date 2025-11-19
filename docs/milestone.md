@@ -1,89 +1,180 @@
-# 콘서트 예약 서비스 마일스톤
+---
 
-본 문서는 콘서트 예약 서비스의 전체 개발 마일스톤을 단계별로 정리한 문서입니다.
-각 단계별 목표, 산출물, 기간을 포함하고 있으며 DB/인프라, 동시성 처리, 테스트 계획까지 포함합니다.
+# 1. 🎯 Overview
+
+본 문서는 **콘서트 예약 플랫폼 개발 및 운영**의 주요 마일스톤을 정리합니다.
+
+API, ERD, INFRA, SSD를 기반으로 기능, 배포, 테스트, 운영 단계를 포함했습니다.
 
 ---
 
-## 1. 설계 단계 (Design Phase)
-| 기간 | 주요 목표 | 산출물 |
-|------|-----------|--------|
-| 1주차 | 요구사항 분석 | 요구사항 명세서, Use Case 문서 |
-| 1~2주차 | DB 설계 및 ERD | ERD 다이어그램, 테이블 정의서 (User, Wallet, QueueToken, Reservation, Payment 등) |
-| 2주차 | 인프라 설계 | 아키텍처 다이어그램, 서비스 컴포넌트 정의 (API Gateway, Redis, MQ, PG 연동 등) |
-| 2~3주차 | API 설계 | OpenAPI 3.0 스펙, 엔드포인트 정의, 요청/응답/에러 케이스 정의 |
+# 2. 🗓️ Week 1~2 – Core API & ERD 확정
+
+**목표**:
+- OpenAPI 기반 콘서트 조회/날짜/좌석 API 정의
+- ERD 확정 및 DB 스키마 설계
+- UUID 기반 ID 정책, 제약 조건(NOT NULL, UNIQUE, FK) 명시
+- 
+**주요 작업**:
+- `openapi.yml` 검토 및 수정
+- `erd.md` 최종 확정
+- Seat/Reservation 상태 모델 정의
+- DB 인덱스 및 트랜잭션 경계 문서화
+
+**검증/완료 기준**:
+- Postman/Swagger에서 CRUD 동작 확인
+- DB 스키마 생성 가능
+- 좌석 예약 중복 방지 로직 검증
 
 ---
 
-## 2. 구현 단계 1 (Backend Core)
-| 기간 | 주요 목표 | 산출물 |
-|------|-----------|--------|
-| 3~4주차 | 인증/로그인 구현 | JWT 발급, QueueToken 발급, 사용자 인증 로직 |
-| 4~5주차 | 콘서트/스케줄/좌석 조회 | DB 연동, 캐시(Redis) 적용, 좌석 등급(zone) + 가격 반영 |
-| 5~6주차 | Wallet 구현 | 포인트 조회/충전/차감 API, PG 연동, 트랜잭션 처리 |
+# 3. 🗓️ Week 3~4 – Reservation & Payment Flow 구현
+
+**목표**:
+- 좌석 임시 배정(PENDING) 및 예약 확정(COMPLETE) 구현
+- 결제 API 연동 및 MQ 기반 후처리 설계
+- Redis 기반 분산 락, TTL 임시 할당 적용
+
+**주요 작업**:
+- Reservation Service 개발 (좌석 예약, 상태 전환)
+- Payment Service 개발 (PG 연동, Kafka 이벤트 발행)
+- Redis Seat Hold + Queue Token 구현
+- SSD 기반 시퀀스 다이어그램 검증
+
+**검증/완료 기준**:
+- 임시 배정 → 결제 성공 시 예약 확정 흐름 정상 동작
+- TTL 만료 시 자동 PENDING 해제
+- Kafka 이벤트 처리 정상
 
 ---
 
-## 3. 구현 단계 2 (예약 및 결제)
-| 기간 | 주요 목표 | 산출물 |
-|------|-----------|--------|
-| 6~7주차 | 좌석 임시 예약 구현 | TTL 5분, Redis 분산락, Reservation 테이블 기록, MQ 연동 |
-| 7~8주차 | 결제 확정 구현 | Wallet 포인트 차감, External PG API 호출, 결제 상태 확정, Reservation 상태 CONFIRMED 처리 |
-| 8~9주차 | 동시성/충돌 처리 | 좌석 충돌, TTL 만료, QueueToken 상태 검증, 409/410 처리 로직 |
+# 4. 🗓️ Week 5 – User & Queue 서비스 구현
+
+**목표**:
+-User Service (회원, 포인트 충전/조회)
+Queue Service (대기열 토큰 발급, 순번 관리)
+Redis Sorted Set 기반 대기열 관리
+
+**주요 작업**:
+- `/users/points` API 구현
+- `/queue/token` API 구현
+- Queue 순번 조회 API 구현
+- 대기열 TTL 및 동시성 테스트
+
+**검증/완료 기준**:
+- 포인트 충전/조회 정상 동작
+- Queue Token 발급 + 순번 조회 정확
+- 경쟁 상황에서 Seat Lock과 충돌 없이 처리 가능
 
 ---
 
-## 4. 테스트 & QA
-| 기간 | 주요 목표 | 산출물 |
-|------|-----------|--------|
-| 9~10주차 | 단위 테스트 | 각 서비스 단위 테스트, DB 트랜잭션 테스트 |
-| 10~11주차 | 통합 테스트 | 시퀀스 다이어그램 기반 기능 테스트, 동시성 시나리오 테스트 |
-| 11주차 | 성능 테스트 | Redis/DB 캐시 hit/miss, Message Queue 처리량, API 부하 테스트 |
-| 11~12주차 | 최종 QA | 전체 기능 검증, 버그 수정, 운영 배포 준비 |
+# 5. 🗓️ Week 6 – Frontend 연동 & 통합 테스트
+
+**목표**:
+- 프론트엔드 콘서트/날짜/좌석 UI 연동
+- 전체 예약/결제 플로우 통합 테스트
+- 임시 좌석 할당, 만료, 결제 실패/성공 시 상태 반영 확인
+
+**주요 작업**:
+- API 통합
+- 좌석 임시 배정 시 TTL 테스트
+- 결제 실패 시 롤백 검증
+- SSD 기반 End-to-End 시퀀스 점검
+
+**검증/완료 기준**:
+- 모든 시나리오 정상 수행
+- Seat 상태 동기화 문제 없음
+- Frontend와 Backend 간 정상 연동
 
 ---
 
-## 5. 배포 & 운영
-| 기간 | 주요 목표 | 산출물 |
-|------|-----------|--------|
-| 12주차 | 배포 준비 | Docker 이미지, Kubernetes 배포 스크립트, 배포 문서 |
-| 12주차 | 운영 모니터링 | 로깅/트레이싱, Metrics/Monitoring, Alert 정책 설정 |
+# 6. 🗓️ Week 7 – Infra 배포 & 안정화
+
+**목표**:
+- Infra 배포 (EKS/K8s, Redis Cluster, PostgreSQL Primary/Replica, Kafka)
+- CI/CD 파이프라인 적용 (Staging → Production, Blue/Green or Canary)
+- 모니터링/알람 세팅
+
+**주요 작업**:
+- `infra.md` 기반 배포 스크립트 완성
+- Redis HA 구성, Failover 테스트
+- DB Replica 승격 테스트
+- Prometheus/Grafana/Alert 세팅
+
+**검증/완료 기준**:
+- Staging → Production 배포 성공
+- 장애 시 Rollback 및 Failover 정상 동작
+- 운영 알람 정상 수신
 
 ---
 
-## 6. 참고 사항
-- 각 서비스는 MSA 기반으로 독립 배포 가능
-- Redis 분산락과 Message Queue를 활용하여 동시성 이슈 최소화
-- QueueToken 상태와 TTL을 기반으로 좌석 예약 권한 관리
-- 결제와 Wallet 차감은 트랜잭션 단위로 일관성 보장
+# 7. 🗓️ Week 8 – 운영/모니터링 & 최적화
+
+**목표**:
+- 실시간 트래픽 감시, 예약 경쟁 상황 대응
+- 성능/지연 모니터링, Redis/Kafka/DB 튜닝
+- SSD 기반 운영 시퀀스 검증
+
+**주요 작업**:
+- Redis latency, seat hold TTL 체크
+- Kafka lag 모니터링
+- DB replication lag 체크
+- 예약/결제 API 성능 테스트
+- Composite index 및 조회 최적화 적용
+
+**검증/완료 기준**:
+- 트래픽 피크 시 시스템 안정성 확보
+- SLA/성능 목표 달성
+- 운영 준비 완료
 
 ---
 
-## 7. 콘서트 예약 서비스 개발 일정 (Gantt Chart)
+# 8. 📅 Deliverables Summary (기간 기준)
+
+| 기간       | Deliverables                                              |
+| -------- | --------------------------------------------------------- |
+| Week 1~2 | OpenAPI + ERD final                                       |
+| Week 3~4 | Reservation/Payment Service + Redis Seat Lock + Kafka 이벤트 |
+| Week 5   | User & Queue 서비스 + 포인트/대기열 API                            |
+| Week 6   | Frontend 연동 + E2E 테스트                                     |
+| Week 7   | Infra 배포 + CI/CD + Monitoring                             |
+| Week 8   | 운영 안정화 + 성능/지연 모니터링                                       |
+
+---
+
+# 9. 📊 Gantt Chart
 
 ```mermaid
 gantt
-    title 콘서트 예약 서비스 개발 마일스톤
+    title Concert Reservation Platform - Milestones
     dateFormat  YYYY-MM-DD
-    axisFormat  %m/%d
+    section Core API & ERD
+    OpenAPI + ERD final             :done, 2025-11-18, 14d
 
-    section 기초 설계
-    DB 설계 및 ERD               :done,   des1, 2025-11-10, 3d
-    OpenAPI 명세 작성             :done,   des2, 2025-11-13, 2d
-    인프라 구성도 설계            :done,   des3, 2025-11-15, 2d
+    section Reservation & Payment Flow
+    Reservation Service + Payment + Redis Lock + Kafka  :active, 2025-12-02, 14d
 
-    section 핵심 기능 개발
-    로그인 & 인증 서비스           :active, auth, 2025-11-17, 3d
-    콘서트 조회 서비스             :active, concert, 2025-11-17, 3d
-    좌석 조회 & 임시 예약 서비스    :booking, 2025-11-20, 4d
-    결제 서비스 & PG 연동          :payment, 2025-11-24, 4d
-    Wallet 서비스 구현             :wallet, 2025-11-24, 3d
+    section User & Queue Service
+    User & Queue API + Points / Queue Token           :2025-12-16, 7d
 
-    section 테스트 & 검증
-    단위 테스트                    :unit, 2025-11-28, 3d
-    통합 테스트                    :integration, 2025-12-01, 4d
-    부하 테스트 / 동시성 검증      :load, 2025-12-05, 3d
+    section Frontend & Integration Test
+    Frontend Integration + E2E Test                   :2025-12-23, 7d
 
-    section 배포
-    스테이징 배포                  :staging, 2025-12-08, 2d
-    운영 배포                      :prod, 2025-12-10, 1d
+    section Infra Deployment & Stabilization
+    Infra Deploy + CI/CD + Monitoring                :2025-12-30, 7d
+
+    section Operations & Optimization
+    Performance Tuning + Monitoring + SLA Check     :2026-01-06, 7d
+```
+
+---
+
+# 10. 🔑 Notes
+- 모든 ID는 **UUID** 사용
+- Seat/Reservation 상태 전환 **PENDING → CONFIRMED → PAID**
+- Redis 임시 할당 TTL 기반 Seat Hold
+- Kafka Event-driven 설계
+- DB 트랜잭션 + Redis Lock으로 중복 예약 방지
+- CI/CD → Staging → Production → Canary/Blue-Green 전략 적용
+
+---
