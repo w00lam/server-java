@@ -1,4 +1,6 @@
-# 📌 Overview
+---
+
+# 1. Overview
 
 이 문서는 콘서트 예약 플랫폼의 핵심 도메인 모델을 설명합니다.
 ERD, 스키마 제약, FK 정책, 인덱스 전략, 예약 상태 전환 규칙을 포함하여
@@ -6,7 +8,7 @@ ERD, 스키마 제약, FK 정책, 인덱스 전략, 예약 상태 전환 규칙�
 
 ---
 
-## 1. ERD Diagram (Mermaid)
+# 2. ERD Diagram (Mermaid)
 ```mermaid
 erDiagram
 
@@ -94,7 +96,7 @@ erDiagram
 
 ---
 
-## 2. Table Specification
+# 3. Table Specification
 ### USERS
 | 필드                   | 타입           | 제약               |
 | -------------------- | ------------ | ---------------- |
@@ -215,7 +217,7 @@ erDiagram
 
 ---
 
-## 3. Reservation Status Lifecycle
+# 4. Reservation Status Lifecycle
 
 예약 프로세스는 아래 규칙을 따라 진행됩니다.
 ```scss
@@ -228,29 +230,29 @@ CONFIRMED → CANCELED (결제 실패)
 
 ---
 
-## 4. Transaction Boundary (중요)
-### 4.1 TEMP_HOLD 생성 (좌석 홀딩)
+# 5. Transaction Boundary (중요)
+### 5.1 TEMP_HOLD 생성 (좌석 홀딩)
 **트랜잭션 필수**
 1. seatId 중복 체크
 2. reservation 생성(status=TEMP_HOLD)
 3. 임시홀드 만료시간 기록
 
-### 4.2 CONFIRM 단계
+### 5.2 CONFIRM 단계
 (결제 전 확정)
 - TEMP_HOLD → CONFIRMED
 - 동시에 seatId의 TEMP_HOLD 중복 존재 제거 검사
 
-### 4.3 결제 완료
+### 5.3 결제 완료
 - PAYMENTS insert
 - RESERVATIONS.status = CONFIRMED 유지
 
-### 4.4 만료 처리 배치
+### 5.4 만료 처리 배치
 - `tempHoldExpiresAt < now`
 - status = EXPIRED 로 변경
 
 ---
 
-## 5. Composite Index Recommendations
+# 6. Composite Index Recommendations
 ### For Seats Lookup
 사용자 좌석 리스트 조회:
 ```sql
@@ -286,7 +288,7 @@ WHERE status = 'TEMP_HOLD'
 
 ---
 
-## 6. Deletion Policy
+# 7. Deletion Policy
 ### Soft Delete 적용 테이블
 - USERS
 - CONCERTS
@@ -306,7 +308,7 @@ WHERE status = 'TEMP_HOLD'
 
 ---
 
-## 7. 향후 고려 추가 요소
+# 8. 향후 고려 추가 요소
 - 좌석 가격 정책 테이블(공연 날짜마다 price rule 적용)
 - 배치 서버의 만료 처리 interval 정책
 - 좌석 등급/구역 모델링 확장
