@@ -1,120 +1,243 @@
-# 인프라구성도
+---
 
-## 1. 개요 (Overview)
+# 1. Overview
 
-본 문서는 **콘서트 예약 서비스**의 전체 인프라 구성을 기술한다.
-해당 시스템은 다음과 같은 특징을 갖는다:
-
-- 높은 트래픽과 동시성 경쟁을 고려한 구조
-- QueueToken 기반의 사용자 접근 제어
-- 좌석 임시 예약(TTL 5분)
-- Redis 기반의 분산락(Distributed Lock)
-- Wallet 포인트 결제 및 PG 연동
-- 예약/결제 트랜잭션 일관성 보장
-- 확장 가능한 MSA(Service 별 확장) 구조
-
-본 문서에서는 **아키텍처 구성**, **서비스 컴포넌트 설명**, **주요 데이터 흐름**, **장애 대응 전략**, **확장성 고려사항**을 포함한다.
+본 문서는 콘서트 예약 시스템의 전체 인프라 구조, 배포 파이프라인, 구성요소(H/A, 선택 이유 포함), 모니터링·알람 지표, 운영 리스크 대응 전략을 기술합니다.
 
 ---
 
-## 2. 전체 아키텍처 구성도 (Architecture Diagram)
-
+# 2. 시스템 아키텍처 개요
 ```mermaid
 flowchart LR
-
-    %% Client Layer
-    A["Client\n(Web/App)"] --> B["CDN"]
-    B --> C["WAF"]
-    C --> D["API Gateway"]
-
-    %% Services (MSA)
-    D --> E1["Auth Service"]
-    D --> E2["Concert Service"]
-    D --> E3["Booking Service"]
-    D --> E4["Payment Service"]
-
-    %% Databases (Primary/Replica)
-    E1 --> F1["User DB\n(Primary/Replica)"]
-    E2 --> F2["Concert DB\n(Primary/Replica)"]
-    E3 --> F3["Booking DB\n(Primary/Replica)"]
-    E4 --> F4["Payment DB\n(Primary/Replica)"]
-
-    %% Redis / Cache / Lock
-    E3 --> G1["Redis Lock Cluster"]
-    E2 --> G2["Redis Cache Cluster"]
-
-    %% Message Queue
-    E3 --> H["Message Queue"]
-    E4 --> H
-
-    %% Background Workers
-    H --> W1["Reservation Expire Worker"]
-    H --> W2["Payment Retry Worker"]
-
-    %% External Payment Gateway
-    E4 --> P1["External PG API"]
-    P1 --> P2["PG Webhook Listener"]
-    P2 --> E4
-
-    %% Observability
-    E1 --> O1["Logging/Tracing"]
-    E2 --> O1
-    E3 --> O1
-    E4 --> O1
-
-    E1 --> O2["Metrics/Monitoring"]
-    E2 --> O2
-    E3 --> O2
-    E4 --> O2
+    User --> CDN --> APIGW
+    APIGW --> App[Application Server]
+    App --> DBPrimary[(PostgreSQL Primary)]
+    App --> DBReplica[(Read Replica)]
+    App --> Redis[(Redis Cluster)]
+    App --> Kafka[(Kafka Cluster)]
+    CI --> CD --> App
 ```
----
-
-## 3. 서비스 컴포넌트 설명
-
-| 서비스                 | 역할                                   |
-| ------------------- | ------------------------------------ |
-| Auth Service        | 로그인, JWT 발급, QueueToken 발급           |
-| Concert Service     | 콘서트 정보, 스케줄, 좌석 조회, 좌석 상태 관리         |
-| Booking Service     | 좌석 임시 예약, TTL 관리, Redis Lock         |
-| Payment Service     | 포인트 결제, PG 연동, 결제 상태 관리              |
-| User DB             | 사용자 정보 저장 (Primary/Replica)          |
-| Concert DB          | 콘서트/스케줄/좌석 정보 저장 (Primary/Replica)   |
-| Booking DB          | 예약/임시 배정 정보 저장 (Primary/Replica)     |
-| Payment DB          | 결제 내역, 포인트 트랜잭션 저장 (Primary/Replica) |
-| Redis Lock Cluster  | 동시성 제어, TTL 관리                       |
-| Redis Cache Cluster | 좌석/콘서트 조회 캐싱                         |
-| Message Queue       | 예약 만료, 결제 재시도 등 비동기 작업 처리            |
-| External PG API     | 결제 연동, PG Webhook 처리                 |
-| Logging/Tracing     | 서비스 호출 로깅, 분산 트레이싱                   |
-| Metrics/Monitoring  | 성능/리소스 모니터링                          |
 
 ---
 
-## 4. 주요 데이터 흐름
+# 3. 배포 흐름 (CI/CD Pipeline)
 
-1. 사용자가 웹/앱에서 로그인 → Auth Service → QueueToken 발급
-2. 콘서트 조회 → Concert Service → Redis 캐시 확인 → DB 조회
-3. 좌석 임시 예약 → Booking Service → Redis Lock → 예약 DB 기록 → Message Queue에 TTL 등록
-4. TTL 만료 시 Worker가 Message Queue에서 예약 해제
-5. 결제 요청 → Payment Service → Wallet DB 차감 → PG API 연동 → 결제 결과 저장 → Message Queue 재시도 처리 가능
+### 전체 단계
+
+### 1) Build
+- GitHub Actions
+    - 코드 정적 분석
+    - 테스트 수행
+    - **Docker 이미지 빌드 → Registry Push**
+- *(선정 이유: GitHub Actions는 Repo와 자연 통합되어 운영 비용이 낮음)*
+
+### 2) Staging 배포
+- 최신 이미지 자동 배포
+- Health Check & Smoke Test 실행
+- 문제 발생 시 자동 알림
+
+### 3) Production 배포
+- 매뉴얼 승인 후 Blue/Green 방식으로 배포
+- Canary 옵션(10% → 30% → 전량) 선택 가능
+- Issue 발생 시 **즉시 롤백 (이전 Stable Image)**
+
+### 4) Rollback 전략
+- Blue/Green 상태 유지
+- Kafka consumer offset freeze 가능
+- DB migration은 backward-compatible 전략 적용
+
+### 선정 이유 요약
+- **Blue/Gree**: 예약 시스템 특성상 무중단 배포가 매우 중요
+- **Canary**: 트래픽 일부만 보내 문제 조기 감지
+- **Staging 동일성**: 실제 예약 API와 동일한 환경에서 검증 필요
 
 ---
 
-## 5. 장애 대응 전략
+# 4. Database (PostgreSQL)
 
-- Redis Lock Fail → BookingService에서 409 Conflict 반환
-- DB Replica 읽기 실패 → Primary DB로 Fallback
-- PG API 실패 → Payment Retry Worker 재시도
-- TTL 만료 처리 지연 → 예약 해제 Worker 재시도
+### 구성 요소
+- Primary DB
+    - 쓰기/트랜잭션 담당
+- Replica DB
+    - 조회 트래픽 분산
+    - 콘서트/날짜/좌석 조회 같은 고QPS API 처리
+
+### Replication Mode
+- Physical Streaming Replication
+- 장애 시 Replica → Primary 자동 승격(Promotion)
+
+### 삭제/갱신 정책
+- Soft Delete(`deletedAt`) 기반
+- FK는 기본 `ON UPDATE CASCADE`, `ON DELETE RESTRICT`
+- 예약/좌석 등 핵심 테이블은 CASCADE 최소화
+
+### 스키마 제약
+- Seat: `(concertDateId, row, col)` UNIQUE
+- Reservation: `(seatId)` UNIQUE (seat double-booking 방지)
+- 모든 id는 UUID (충돌 방지 및 분산 환경에서 유리)
+
+### 선정 이유
+- 강력한 트랜잭션
+- 다양한 인덱싱과 복제 기능
+- Seat/Reservation처럼 경쟁 조건이 많은 구조에 안정적
+
+### 알람/모니터링 지표
+- **Replication Lag**
+- Deadlock 발생률
+- Long-running Query
+- Connection Pool 사용률
 
 ---
 
-## 6. 확장성 고려사항
+# 5. Redis (Cluster)
 
-- 각 서비스별 MSA 구조로 독립 스케일링 가능
-- Redis Cluster로 동시성 및 캐시 성능 확장
-- DB Primary/Replica 구조로 읽기/쓰기 분리
-- Message Queue로 비동기 작업 분리, Worker 확장 가능
-- Observability 통합으로 서비스 모니터링 및 알람 가능
+### 주요 역할
+- 분산 락(좌석 임시 배정 Lock)
+- **Seat Pending Assignment 저장** (TTL 기반 임시 점유)
+- **대기열 토큰 저장**
+- 일부 API rate-limit 보조 용도
+
+### HA 구성
+- Redis Cluster (3 Master, 3 Replica)
+- 자동 Failover 지원
+
+### 분산 락 사용 이유
+- 초고속 처리 + Lua Script 기반 원자적 연산
+- 다중 인스턴스 환경에서 Seat 경쟁 조건을 제어하기 위해 필수
+
+### 알람/모니터링 지표
+- Latency spike
+- Key Expiration 폭증
+- Failover 이벤트
+- Memory fragmentation
+
+### 선정 이유
+- TTL + Lock + Queue Token 관리가 매우 빠르고 안정적
+- DB 로딩 없이 초고속 경쟁 제어 가능
+
+---
+
+# 6. Kafka (Message Queue)
+
+### 사용 영역
+- 결제 완료 후 예약 확정 이벤트 처리
+- 포인트 충전 기록 저장
+- 알림/이벤트 후처리 비동기화
+
+ ### 운영 전략
+ - Consumer Group 기반 수평 확장
+ - Offset 관리로 재처리 및 장애 대응
+ - DLQ 적용 가능
+
+### 선정 이유
+- 높은 처리량
+- 내구성 & 재처리 용이
+- 트래픽 피크 이후 자연스러운 이벤트 소화 가능
+
+### 알람/모니터링 지표
+- ConsumerLag
+- Topic 적재량 증가
+- 재시도(Errored) Message 증가
+
+---
+
+# 7. Application Server (Spring Boot)
+
+### 주요 특징
+- Stateless 구조 → 자동 확장(HPA) 적용 가능
+- FeignClient 기반 외부 결제/포인트 연동
+- RateLimiter + CircuitBreaker(Fallback) 적용
+
+### Scaling 정책
+- CPU > 60%
+- Response Latency(P95) 증가
+- Queue Token 발급 API QPS 급증 시 자동 확장
+
+### 선정 이유
+- Spring Boot 기반 생태계가 관찰성/운영 도구와 잘 맞음
+- MSA로의 확장이 자연스러움
+
+---
+
+# 8. API Gateway
+
+### 역할
+- 라우팅
+- 인증/인가
+- Rate Limit
+- 공통 로깅/트레이싱
+
+### 선정 이유
+- 단일 진입점에서 트래픽 제어
+- 공격 방어 및 Abuse 방지
+
+---
+
+# 9. Secrets & Config 관리
+
+- Vault/KMS 기반 암호화
+- 환경 변수 + GitOps 기반 ConfigMap
+- Secret rotation 가능
+
+---
+
+# 10. Observability (모니터링 & 알람)
+
+### APM
+- Application latency (P95/P99)
+- API 에러율
+- TPS
+- Reservation 실패 패턴 모니터링
+
+### Logging
+- JSON 구조 로그
+- Correlation-ID 기반 Trace
+
+### Metrics Dashboard (Prometheus + Grafana)
+- Redis latency
+- Kafka lag
+- DB replication lag
+- Lock Waits
+- Slow Query Trends
+
+### Alerting
+- Redis failover 발생
+- Kafka consumer lag > threshold
+- DB replication lag > threshold
+- 예약 실패율 증가
+- 대기열 토큰 처리 지연
+
+---
+
+# 11. Network & Security
+
+- VPC (public/private subnet)
+- Redis/DB/Kafka는 Private subnet
+- WAF + Bot detection
+- API Throttling (특히 좌석 예약, 대기열 진입)
+
+---
+
+# 12. Infra as Code
+
+- Terraform 기반 전체 IaC
+- Helm으로 앱 배포 템플릿 관리
+- GitOps 스타일
+
+---
+
+# 13. Appendix
+
+### 트래픽 패턴 기반 최적화
+- 조회 트래픽은 대부분 Replica 또는 Redis 캐싱으로 해결
+- 예약/결제는 강한 트랜잭션 요구 → Primary + Redis 분산락 조합
+
+### 장애 시나리오 대응
+| 장애             | 대응 전략                            |
+| -------------- | -------------------------------- |
+| Redis Failover | Pending Seat TTL 보존, Lock 자동 재확립 |
+| DB Primary 장애  | Replica Auto-Promotion           |
+| Kafka Lag 증가   | Consumer scale-out               |
+| Deployment 문제  | Blue/Green 롤백                    |
 
 ---
