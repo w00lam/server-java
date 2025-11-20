@@ -40,7 +40,7 @@ dependencies {
 
 	// Lombok
 	implementation("org.projectlombok:lombok")
-	annotationProcessor("org.projectlombok:lombo")
+	annotationProcessor("org.projectlombok:lombok")
 
     // Test
     testImplementation("org.springframework.boot:spring-boot-starter-test")
