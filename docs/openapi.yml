@@ -116,6 +116,30 @@ components:
         - paymentId
         - status
 
+    PointRequest:
+      type: object
+      properties:
+        userId:
+          type: string
+          format: uuid
+        amount:
+          type: integer
+      required:
+        - userId
+        - amount
+
+    PointResponse:
+      type: object
+      properties:
+        userId:
+          type: string
+          format: uuid
+        newBalance:
+          type: integer
+      required:
+        - userId
+        - newBalance
+
 paths:
   /concerts:
     get:
@@ -212,7 +236,7 @@ paths:
                 - section: "R"
                   row: "B"
                   number: 10
-                  status: RESERVED
+                  status: SOLD
         '404':
           description: Concert or date not found
           content:
@@ -316,6 +340,77 @@ paths:
                 reservedSeats: ["A1", "A2"]
         '404':
           description: Reservation not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /points/{userId}:
+    get:
+      summary: Get user's current points
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: User's current points
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  userId:
+                    type: string
+                    format: uuid
+                  points:
+                    type: integer
+                required:
+                  - userId
+                  - points
+              example:
+                userId: "123e4567-e89b-12d3-a456-426614174000"
+                points: 5000
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /points/charge:
+    post:
+      summary: Charge points to a user's account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PointRequest'
+            example:
+              userId: "123e4567-e89b-12d3-a456-426614174000"
+              amount: 1000
+      responses:
+        '201':
+          description: Points successfully charged
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PointResponse'
+              example:
+                userId: "123e4567-e89b-12d3-a456-426614174000"
+                newBalance: 6000
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: User not found
           content:
             application/json:
               schema:
