@@ -1,4 +1,4 @@
-package kr.hhplus.be.server.reservation.domian;
+package kr.hhplus.be.server.reservation.entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;

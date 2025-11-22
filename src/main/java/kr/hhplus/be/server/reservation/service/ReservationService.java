@@ -1,6 +1,6 @@
 package kr.hhplus.be.server.reservation.service;
 
-import kr.hhplus.be.server.reservation.domian.Reservation;
+import kr.hhplus.be.server.reservation.entity.Reservation;
 import kr.hhplus.be.server.reservation.usecase.MakeReservationUseCase;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;

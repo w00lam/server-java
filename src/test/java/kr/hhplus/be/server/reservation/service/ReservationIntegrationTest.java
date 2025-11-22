@@ -2,8 +2,8 @@ package kr.hhplus.be.server.reservation.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import kr.hhplus.be.server.adapter.out.persistence.jpa.JpaReservationRepository;
-import kr.hhplus.be.server.reservation.domian.Reservation;
-import kr.hhplus.be.server.reservation.domian.ReservationStatus;
+import kr.hhplus.be.server.reservation.entity.Reservation;
+import kr.hhplus.be.server.reservation.entity.ReservationStatus;
 import kr.hhplus.be.server.reservation.dto.ReservationRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

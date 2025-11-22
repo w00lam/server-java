@@ -1,8 +1,8 @@
 package kr.hhplus.be.server.reservation.controller;
 
 import kr.hhplus.be.server.adapter.in.web.ReservationController;
-import kr.hhplus.be.server.reservation.domian.Reservation;
-import kr.hhplus.be.server.reservation.domian.ReservationStatus;
+import kr.hhplus.be.server.reservation.entity.Reservation;
+import kr.hhplus.be.server.reservation.entity.ReservationStatus;
 import kr.hhplus.be.server.reservation.dto.ReservationRequest;
 import kr.hhplus.be.server.reservation.dto.ReservationResponse;
 import kr.hhplus.be.server.reservation.usecase.MakeReservationUseCase;

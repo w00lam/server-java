@@ -1,8 +1,8 @@
 package kr.hhplus.be.server.reservation.service;
 
-import kr.hhplus.be.server.reservation.domian.DefaultReservationExpirationPolicy;
-import kr.hhplus.be.server.reservation.domian.Reservation;
-import kr.hhplus.be.server.reservation.domian.ReservationExpirationPolicy;
+import kr.hhplus.be.server.reservation.entity.DefaultReservationExpirationPolicy;
+import kr.hhplus.be.server.reservation.entity.Reservation;
+import kr.hhplus.be.server.reservation.entity.ReservationExpirationPolicy;
 import kr.hhplus.be.server.reservation.repository.ReservationRepository;
 import kr.hhplus.be.server.reservation.usecase.MakeReservationUseCase;
 import org.junit.jupiter.api.BeforeEach;

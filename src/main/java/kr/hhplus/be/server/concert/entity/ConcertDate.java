@@ -26,7 +26,6 @@ public class ConcertDate {
     @Column(name = "concert_id", columnDefinition = "BINARY(16)", nullable = false)
     private UUID concertId;
 
-
     @Column(name = "event_date", nullable = false)
     private LocalDate eventDate;
 

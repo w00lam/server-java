@@ -1,4 +1,4 @@
-package kr.hhplus.be.server.reservation.domian;
+package kr.hhplus.be.server.reservation.entity;
 
 import java.time.LocalDateTime;
 

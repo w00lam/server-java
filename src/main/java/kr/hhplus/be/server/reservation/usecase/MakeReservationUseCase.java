@@ -1,9 +1,10 @@
 package kr.hhplus.be.server.reservation.usecase;
 
-import kr.hhplus.be.server.reservation.domian.Reservation;
-import kr.hhplus.be.server.reservation.domian.ReservationExpirationPolicy;
+import kr.hhplus.be.server.reservation.entity.Reservation;
+import kr.hhplus.be.server.reservation.entity.ReservationExpirationPolicy;
 import kr.hhplus.be.server.reservation.repository.ReservationRepository;
 import lombok.AllArgsConstructor;
+import org.springframework.stereotype.Service;
 
 import java.time.Clock;
 import java.util.Optional;
