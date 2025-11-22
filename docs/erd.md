@@ -112,6 +112,10 @@ erDiagram
 - `email UNIQUE`
 - `(deleted, email)` partial filtering 고려
 
+**포인트 관련**
+- `points` 필드는 결제/충전에 사용됨
+- 트랜잭션 적용 필수 (충전/사용 시 race condition 방지)
+
 ### CONCERTS
 | 필드                   | 타입           | 제약          |
 | -------------------- | ------------ | ----------- |
@@ -245,6 +249,7 @@ CONFIRMED → CANCELED (결제 실패)
 ### 5.3 결제 완료
 - PAYMENTS insert
 - RESERVATIONS.status = CONFIRMED 유지
+- 포인트 차감
 
 ### 5.4 만료 처리 배치
 - `tempHoldExpiresAt < now`
@@ -308,7 +313,43 @@ WHERE status = 'TEMP_HOLD'
 
 ---
 
-# 8. 향후 고려 추가 요소
+# 8. Points Transaction Boundary
+
+### 8.1 포인트 조회
+- 단순 조회: `USERS.points` 반환
+- 예외: 사용자 없음 → 404
+
+### 8.2 포인트 충전
+
+**트랜잭션 필수**
+1. 사용자 존재 확인
+2. `points = points + amount` 업데이트
+3. 새 잔액 반환
+
+**예시 SQL**
+```sql
+UPDATE users
+SET points = points + :amount, updatedAt = NOW()
+WHERE id = :userId
+RETURNING points;
+```
+
+### 8.3 포인트 사용
+- 예약 결제 시 TEMP_HOLD → CONFIRMED 단계에서 포인트 차감
+- 사용량 > 잔액 → 결제 실패
+
+**예시 SQL**
+```sql
+UPDATE users
+SET points = points - :amount, updatedAt = NOW()
+WHERE id = :userId
+  AND points >= :amount
+RETURNING points;
+```
+
+---
+
+# 향후 고려 추가 요소
 - 좌석 가격 정책 테이블(공연 날짜마다 price rule 적용)
 - 배치 서버의 만료 처리 interval 정책
 - 좌석 등급/구역 모델링 확장
