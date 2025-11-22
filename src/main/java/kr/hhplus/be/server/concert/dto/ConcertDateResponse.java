@@ -1,6 +1,6 @@
 package kr.hhplus.be.server.concert.dto;
 
-import kr.hhplus.be.server.concert.entity.ConcertDate;
+import kr.hhplus.be.server.concert.domain.ConcertDate;
 
 import java.time.LocalDate;
 import java.util.UUID;

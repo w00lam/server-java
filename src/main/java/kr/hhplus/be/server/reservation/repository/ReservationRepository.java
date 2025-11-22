@@ -1,6 +1,6 @@
 package kr.hhplus.be.server.reservation.repository;
 
-import kr.hhplus.be.server.reservation.entity.Reservation;
+import kr.hhplus.be.server.reservation.domain.Reservation;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;

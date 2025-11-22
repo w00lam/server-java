@@ -1,7 +1,7 @@
 package kr.hhplus.be.server.point.service;
 
-import kr.hhplus.be.server.point.entity.PointTransaction;
-import kr.hhplus.be.server.point.entity.PointType;
+import kr.hhplus.be.server.point.domain.PointTransaction;
+import kr.hhplus.be.server.point.domain.PointType;
 import kr.hhplus.be.server.point.repository.PointRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -10,7 +10,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 

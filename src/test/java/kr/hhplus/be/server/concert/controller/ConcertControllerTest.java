@@ -2,8 +2,8 @@ package kr.hhplus.be.server.concert.controller;
 
 import kr.hhplus.be.server.concert.dto.ConcertDateResponse;
 import kr.hhplus.be.server.concert.dto.SeatResponse;
-import kr.hhplus.be.server.concert.entity.ConcertDate;
-import kr.hhplus.be.server.concert.entity.Seat;
+import kr.hhplus.be.server.concert.domain.ConcertDate;
+import kr.hhplus.be.server.concert.domain.Seat;
 import kr.hhplus.be.server.concert.service.ConcertService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

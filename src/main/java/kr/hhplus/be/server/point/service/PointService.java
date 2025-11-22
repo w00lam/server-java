@@ -1,7 +1,7 @@
 package kr.hhplus.be.server.point.service;
 
-import kr.hhplus.be.server.point.entity.PointTransaction;
-import kr.hhplus.be.server.point.entity.PointType;
+import kr.hhplus.be.server.point.domain.PointTransaction;
+import kr.hhplus.be.server.point.domain.PointType;
 import kr.hhplus.be.server.point.repository.PointRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;

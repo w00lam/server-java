@@ -1,6 +1,6 @@
 package kr.hhplus.be.server.adapter.in.web;
 
-import kr.hhplus.be.server.reservation.entity.Reservation;
+import kr.hhplus.be.server.reservation.domain.Reservation;
 import kr.hhplus.be.server.reservation.dto.ReservationRequest;
 import kr.hhplus.be.server.reservation.dto.ReservationResponse;
 import kr.hhplus.be.server.reservation.service.ReservationService;

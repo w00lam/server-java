@@ -1,4 +1,4 @@
-package kr.hhplus.be.server.point.entity;
+package kr.hhplus.be.server.point.domain;
 
 public enum PointType {
     CHARGE, USE

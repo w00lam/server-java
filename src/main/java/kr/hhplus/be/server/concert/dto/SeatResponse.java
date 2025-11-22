@@ -1,6 +1,6 @@
 package kr.hhplus.be.server.concert.dto;
 
-import kr.hhplus.be.server.concert.entity.Seat;
+import kr.hhplus.be.server.concert.domain.Seat;
 
 import java.util.UUID;
 

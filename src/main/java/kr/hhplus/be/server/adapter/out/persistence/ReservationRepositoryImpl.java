@@ -1,11 +1,10 @@
 package kr.hhplus.be.server.adapter.out.persistence;
 
 import kr.hhplus.be.server.adapter.out.persistence.jpa.JpaReservationRepository;
-import kr.hhplus.be.server.reservation.entity.Reservation;
-import kr.hhplus.be.server.reservation.entity.ReservationStatus;
+import kr.hhplus.be.server.reservation.domain.Reservation;
+import kr.hhplus.be.server.reservation.domain.ReservationStatus;
 import kr.hhplus.be.server.reservation.repository.ReservationRepository;
 import lombok.AllArgsConstructor;
-import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;

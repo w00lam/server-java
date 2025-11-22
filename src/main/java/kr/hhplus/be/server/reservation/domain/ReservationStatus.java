@@ -1,4 +1,4 @@
-package kr.hhplus.be.server.reservation.entity;
+package kr.hhplus.be.server.reservation.domain;
 
 public enum ReservationStatus {
     TEMP_HOLD,

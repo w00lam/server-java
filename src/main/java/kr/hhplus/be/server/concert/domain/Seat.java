@@ -1,4 +1,4 @@
-package kr.hhplus.be.server.concert.entity;
+package kr.hhplus.be.server.concert.domain;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
