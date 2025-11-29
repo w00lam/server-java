@@ -4,6 +4,7 @@ import kr.hhplus.be.server.point.dto.ChargePointRequest;
 import kr.hhplus.be.server.point.dto.ChargePointResponse;
 import kr.hhplus.be.server.point.dto.PointBalanceResponse;
 import kr.hhplus.be.server.point.service.PointService;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -26,19 +27,25 @@ public class PointControllerTest {
     @InjectMocks
     private PointController controller;
 
-    private final UUID FIXED_USER_ID = UUID.fromString("11111111-1111-1111-1111-111111111111");
+    private static final UUID FIXED_USER_ID = UUID.fromString("11111111-1111-1111-1111-111111111111");
+
+    private ChargePointRequest createChargePointRequest() {
+        ChargePointRequest request = new ChargePointRequest();
+        request.setUserId(FIXED_USER_ID);
+        request.setAmount(1000);
+        return request;
+    }
 
     @Test
     @DisplayName("충전 요청 후 ChargePointResponse 반환")
     void chargePoint_returnsResponse() {
-        ChargePointRequest request = new ChargePointRequest();
-        request.setUserId(FIXED_USER_ID);
-        request.setAmount(1000);
+        ChargePointRequest request = createChargePointRequest();
 
         when(service.getPointBalance(FIXED_USER_ID)).thenReturn(1000);
 
         ResponseEntity<ChargePointResponse> response = controller.chargePoint(request);
 
+        Assertions.assertNotNull(response.getBody());
         assertEquals(FIXED_USER_ID, response.getBody().getUserId());
         assertEquals(1000, response.getBody().getAmount());
         assertEquals(1000, response.getBody().getBalance());
@@ -53,6 +60,7 @@ public class PointControllerTest {
 
         ResponseEntity<PointBalanceResponse> response = controller.getPointBalance(FIXED_USER_ID);
 
+        Assertions.assertNotNull(response.getBody());
         assertEquals(FIXED_USER_ID, response.getBody().getUserId());
         assertEquals(500, response.getBody().getBalance());
     }

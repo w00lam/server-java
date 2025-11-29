@@ -1,6 +1,7 @@
 package kr.hhplus.be.server.payment.domain;
 
 import jakarta.persistence.*;
+import kr.hhplus.be.server.reservation.domain.Reservation;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
@@ -10,12 +11,9 @@ import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+@Data
 @Entity
-@Getter
-@Setter
 @Builder
-@NoArgsConstructor
-@AllArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
 @Table(name = "PAYMENTS",
         indexes = {
@@ -28,8 +26,9 @@ public class Payment {
     @GeneratedValue
     private UUID id;
 
-    @Column(nullable = false)
-    private UUID reservationId;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "reservation_id", nullable = false)
+    private Reservation reservation;
 
     @Column(nullable = false)
     private int amount;
@@ -55,29 +54,17 @@ public class Payment {
     @Column(nullable = false)
     private boolean deleted;
 
-    public Payment(UUID id, UUID reservationId, int amount, PaymentStatus status,
-                   LocalDateTime paidAt, LocalDateTime createdAt, LocalDateTime updatedAt, boolean deleted) {
-        this.id = id;
-        this.reservationId = reservationId;
-        this.amount = amount;
-        this.status = status;
-        this.paidAt = paidAt;
-        this.createdAt = createdAt;
-        this.updatedAt = updatedAt;
-        this.deleted = deleted;
-    }
-
-    public static Payment createPending(UUID reservationId, int amount, Clock clock) {
+    public static Payment createPending(Reservation reservation, int amount, Clock clock) {
         LocalDateTime now = LocalDateTime.now(clock);
-        return new Payment(
-                UUID.randomUUID(),
-                reservationId,
-                amount,
-                PaymentStatus.PENDING,
-                null,
-                now,
-                now,
-                false
-        );
+        return Payment.builder()
+                .id(UUID.randomUUID())
+                .reservation(reservation)
+                .amount(amount)
+                .status(PaymentStatus.PENDING)
+                .paidAt(null)
+                .createdAt(now)
+                .updatedAt(now)
+                .deleted(false)
+                .build();
     }
 }

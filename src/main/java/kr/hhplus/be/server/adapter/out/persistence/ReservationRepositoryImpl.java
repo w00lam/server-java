@@ -20,7 +20,7 @@ public class ReservationRepositoryImpl implements ReservationRepository {
     }
 
     @Override
-    public void save(Reservation reservation) {
-        jpaRepository.save(reservation);
+    public Reservation save(Reservation reservation) {
+        return jpaRepository.save(reservation);
     }
 }

@@ -1,6 +1,7 @@
 package kr.hhplus.be.server.queue.token.domain;
 
 import jakarta.persistence.*;
+import kr.hhplus.be.server.user.domain.User;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
@@ -20,8 +21,9 @@ public class Token {
     @Column(name = "id", nullable = false, updatable = false)
     private UUID id;
 
-    @Column(name = "user_id", nullable = false)
-    private UUID userId;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
     @Column(name = "token", nullable = false, unique = true)
     private String token;
@@ -40,10 +42,10 @@ public class Token {
     @Column(name = "deleted")
     private Boolean deleted;
 
-    public static Token create(UUID userId, String token, int position) {
+    public static Token create(User user, String token, int position) {
         return Token.builder()
                 .id(UUID.randomUUID())
-                .userId(userId)
+                .user(user)
                 .token(token)
                 .position(position)
                 .deleted(false)

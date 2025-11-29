@@ -1,9 +1,8 @@
 package kr.hhplus.be.server.point.domain;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import kr.hhplus.be.server.user.domain.User;
+import lombok.Data;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -11,10 +10,8 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+@Data
 @Entity
-@Getter
-@NoArgsConstructor
-@AllArgsConstructor
 @Table(name = "POINT_TRANSACTION")
 @EntityListeners(AuditingEntityListener.class)
 public class PointTransaction {
@@ -22,15 +19,16 @@ public class PointTransaction {
     @GeneratedValue
     private UUID id;
 
-    @Column(nullable = false)
-    private UUID userId;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
     @Column(nullable = false)
     private int amount;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private PointType type; // CHARGE, USE
+    private PointType type;
 
     @CreatedDate
     @Column(nullable = false)
@@ -43,8 +41,8 @@ public class PointTransaction {
     @Column(nullable = false)
     private boolean deleted = false;
 
-    public PointTransaction(UUID userId, int amount, PointType type) {
-        this.userId = userId;
+    public PointTransaction(User user, int amount, PointType type) {
+        this.user = user;
         this.amount = amount;
         this.type = type;
     }

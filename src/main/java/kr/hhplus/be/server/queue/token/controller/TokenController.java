@@ -20,11 +20,11 @@ public class TokenController {
     @PostMapping("/token")
     public ResponseEntity<TokenResponse> issueToken(@RequestBody TokenRequest request) {
 
-        if (request.getUserId() == null) {
+        if (request.getUser() == null) {
             return ResponseEntity.badRequest().build();
         }
 
-        Token token = service.createToken(request.getUserId());
+        Token token = service.createToken(request.getUser());
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(TokenResponse.fromEntity(token));

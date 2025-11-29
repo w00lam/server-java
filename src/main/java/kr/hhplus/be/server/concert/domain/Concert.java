@@ -1,19 +1,15 @@
 package kr.hhplus.be.server.concert.domain;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
+@Data
 @Entity
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
 @Table(name = "concerts")
 public class Concert {
     @Id
@@ -32,6 +28,23 @@ public class Concert {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt = LocalDateTime.now();
 
-    @Column(name = "deleted", nullable = false)
-    private boolean deleted;
+    // ConcertDate와 양방향 연관관계
+    @OneToMany(
+            mappedBy = "concert",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true,
+            fetch = FetchType.LAZY
+    )
+    private List<ConcertDate> dates = new ArrayList<>();
+
+    // 연관 엔티티 추가 헬퍼 메서드
+    public void addDate(ConcertDate date) {
+        dates.add(date);
+        date.setConcert(this);
+    }
+
+    public void removeDate(ConcertDate date) {
+        dates.remove(date);
+        date.setConcert(null);
+    }
 }

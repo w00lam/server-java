@@ -1,6 +1,7 @@
 package kr.hhplus.be.server.payment.service;
 
 import kr.hhplus.be.server.payment.domain.Payment;
+import kr.hhplus.be.server.payment.port.PaymentServicePort;
 import kr.hhplus.be.server.payment.repository.PaymentRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -11,7 +12,7 @@ import java.util.UUID;
 
 @Service
 @AllArgsConstructor
-public class PaymentServiceImpl implements PaymentService {
+public class PaymentServiceImpl implements PaymentServicePort {
     private final PaymentRepository repository;
     private final Clock clock;
 

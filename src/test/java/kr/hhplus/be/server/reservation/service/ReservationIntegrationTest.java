@@ -28,6 +28,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @DisplayName("Reservation 통합 테스트")
 public class ReservationIntegrationTest {
+
     @Autowired
     private MockMvc mockMvc;
 
@@ -44,19 +45,24 @@ public class ReservationIntegrationTest {
     void setUp() {
         fixedUserId = UUID.fromString("11111111-1111-1111-1111-111111111111");
         fixedSeatId = UUID.fromString("22222222-2222-2222-2222-222222222222");
-        jpaRepository.deleteAll(); // 테스트 반복 가능하도록 초기화
+
+        jpaRepository.deleteAll();
     }
 
     @Test
     @DisplayName("좌석 예약 요청 시 정상 동작")
     void reserveSeat_integration_success() throws Exception {
+        // given
         ReservationRequest request = new ReservationRequest();
         request.setUserId(fixedUserId);
         request.setSeatId(fixedSeatId);
 
-        mockMvc.perform(post("/reservations")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+        // API 검증
+        mockMvc.perform(
+                        post("/reservations")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request))
+                )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.reservationId").exists())
                 .andExpect(jsonPath("$.userId").value(fixedUserId.toString()))
@@ -64,10 +70,18 @@ public class ReservationIntegrationTest {
                 .andExpect(jsonPath("$.status").value(ReservationStatus.TEMP_HOLD.name()));
 
         // DB 검증
-        Optional<Reservation> list = jpaRepository.findBySeatIdAndActive(fixedSeatId, List.of(ReservationStatus.TEMP_HOLD, ReservationStatus.CONFIRMED));
-        assertTrue(list.isPresent(), "예약이 존재해야 합니다");
+        Optional<Reservation> found =
+                jpaRepository.findBySeatIdAndActive(
+                        fixedSeatId,
+                        List.of(ReservationStatus.TEMP_HOLD, ReservationStatus.CONFIRMED)
+                );
 
-        Reservation reservation = list.get();
-        assertEquals(fixedSeatId, reservation.getSeatId());
+        assertTrue(found.isPresent(), "예약이 DB에 존재해야 합니다");
+
+        Reservation reservation = found.get();
+
+        assertEquals(fixedSeatId, reservation.getSeat().getId());
+        assertEquals(fixedUserId, reservation.getUser().getId());
     }
 }
+

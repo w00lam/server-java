@@ -1,5 +1,6 @@
 package kr.hhplus.be.server.concert.service;
 
+import kr.hhplus.be.server.concert.domain.Concert;
 import kr.hhplus.be.server.concert.domain.ConcertDate;
 import kr.hhplus.be.server.concert.domain.Seat;
 import kr.hhplus.be.server.concert.repository.ConcertRepository;
@@ -30,14 +31,20 @@ public class ConcertServiceTest {
     private static final UUID FIXED_CONCERT_ID = UUID.fromString("11111111-1111-1111-1111-111111111111");
     private static final UUID FIXED_CONCERT_DATE_ID = UUID.fromString("22222222-2222-2222-2222-222222222222");
     private static final UUID FIXED_SEAT_ID = UUID.fromString("33333333-3333-3333-3333-333333333333");
-
     private static final LocalDate FIXED_EVENT_DATE = LocalDate.of(2025, 12, 12);
     private static final LocalDateTime FIXED_NOW = LocalDateTime.of(2025, 12, 12, 0, 0);
 
-    private ConcertDate createConcertDateFixture() {
+
+    private Concert createConcertFixture() {
+        Concert concert = new Concert();
+        concert.setId(FIXED_CONCERT_ID);
+        return concert;
+    }
+
+    private ConcertDate createConcertDateFixture(Concert concert) {
         return new ConcertDate(
                 FIXED_CONCERT_DATE_ID,
-                FIXED_CONCERT_ID,
+                concert,
                 FIXED_EVENT_DATE,
                 FIXED_NOW,
                 FIXED_NOW,
@@ -45,10 +52,10 @@ public class ConcertServiceTest {
         );
     }
 
-    private Seat createSeatFixture() {
+    private Seat createSeatFixture(ConcertDate concertDate) {
         return new Seat(
                 FIXED_SEAT_ID,
-                FIXED_CONCERT_DATE_ID,
+                concertDate,
                 "A",
                 "1",
                 "1",
@@ -62,27 +69,30 @@ public class ConcertServiceTest {
     @Test
     @DisplayName("콘서트 ID로 콘서트 날짜 조회 시 올바른 리스트 반환")
     void getConcertDates_returnsList() {
-        ConcertDate date = createConcertDateFixture();
+        Concert concert = createConcertFixture();
+        ConcertDate date = createConcertDateFixture(concert);
 
-        when(repository.findDatesByConcertId(FIXED_CONCERT_ID)).thenReturn(List.of(date));
+        when(repository.findDatesByConcertId(concert.getId())).thenReturn(List.of(date));
 
-        List<ConcertDate> result = service.getConcertDates(FIXED_CONCERT_ID);
+        List<ConcertDate> result = service.getConcertDates(concert.getId());
 
         assertEquals(1, result.size());
-        assertEquals(FIXED_CONCERT_ID, result.get(0).getConcertId());
+        assertEquals(concert.getId(), result.get(0).getConcert().getId());
         assertEquals(FIXED_EVENT_DATE, result.get(0).getEventDate());
     }
 
     @Test
     @DisplayName("콘서트 날짜 ID로 좌석 조회 시 올바른 리스트 반환")
     void getSeatsByConcertDate_returnsList() {
-        Seat seat = createSeatFixture();
+        Concert concert = createConcertFixture();
+        ConcertDate concertDate = createConcertDateFixture(concert);
+        Seat seat = createSeatFixture(concertDate);
 
         when(repository.findSeatsByConcertDateId(FIXED_CONCERT_DATE_ID)).thenReturn(List.of(seat));
 
         List<Seat> result = service.getSeatsByConcertDate(FIXED_CONCERT_DATE_ID);
 
         assertEquals(1, result.size());
-        assertEquals(FIXED_CONCERT_DATE_ID, result.get(0).getConcertDateId());
+        assertEquals(FIXED_CONCERT_DATE_ID, result.get(0).getConcertDate().getId());
     }
 }
