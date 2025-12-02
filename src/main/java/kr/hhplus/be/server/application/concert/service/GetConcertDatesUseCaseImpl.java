@@ -1,0 +1,24 @@
+package kr.hhplus.be.server.application.concert.service;
+
+import kr.hhplus.be.server.application.concert.port.in.GetConcertDatesQuery;
+import kr.hhplus.be.server.application.concert.port.in.GetConcertDatesResult;
+import kr.hhplus.be.server.application.concert.port.in.GetConcertDatesUseCase;
+import kr.hhplus.be.server.application.concert.port.out.ConcertDateRepositoryPort;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+
+@Service
+@RequiredArgsConstructor
+public class GetConcertDatesUseCaseImpl implements GetConcertDatesUseCase {
+    private final ConcertDateRepositoryPort concertDateRepositoryPort;
+
+    @Override
+    public List<GetConcertDatesResult> execute(GetConcertDatesQuery query) {
+        return concertDateRepositoryPort.findDatesByConcertId(query.concertId())
+                .stream()
+                .map(date -> new GetConcertDatesResult(date.getId(), date.getEventDate()))
+                .toList();
+    }
+}
