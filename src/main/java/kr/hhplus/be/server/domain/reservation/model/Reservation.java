@@ -5,6 +5,7 @@ import kr.hhplus.be.server.domain.concert.model.Seat;
 import kr.hhplus.be.server.domain.user.model.User;
 import lombok.Builder;
 import lombok.Data;
+import lombok.Getter;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -13,8 +14,9 @@ import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-@Data
+
 @Entity
+@Getter
 @Builder
 @EntityListeners(AuditingEntityListener.class)
 @Table(name = "RESERVATIONS",

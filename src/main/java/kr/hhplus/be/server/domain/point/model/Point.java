@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import kr.hhplus.be.server.domain.user.model.User;
 import lombok.Builder;
 import lombok.Data;
+import lombok.Getter;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -11,8 +12,8 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-@Data
 @Entity
+@Getter
 @Builder
 @Table(name = "POINTS")
 @EntityListeners(AuditingEntityListener.class)
@@ -48,13 +49,6 @@ public class Point {
                 .user(user)
                 .amount(amount)
                 .type(PointType.CHARGE)
-                .build();
-    }
-    public static Point createUse(User user, int amount) {
-        return Point.builder()
-                .user(user)
-                .amount(amount)
-                .type(PointType.USE)
                 .build();
     }
 }

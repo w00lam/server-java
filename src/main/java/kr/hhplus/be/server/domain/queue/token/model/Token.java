@@ -10,10 +10,10 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-@Getter
 @Entity
+@Getter
+@Builder
 @EntityListeners(AuditingEntityListener.class)
-@NoArgsConstructor(access = lombok.AccessLevel.PROTECTED)
 @Table(name = "QUEUE_TOKENS",
         uniqueConstraints = @UniqueConstraint(columnNames = "token"))
 public class Token {
@@ -43,12 +43,14 @@ public class Token {
     private Boolean deleted;
 
     public static Token issue(User user, int position) {
-        Token token = new Token();
-        token.id = UUID.randomUUID();
-        token.user = user;
-        token.tokenValue = token.getId().toString();
-        token.position = position;
-        token.deleted = false;
-        return token;
+        UUID id = UUID.randomUUID();
+
+        return Token.builder()
+                .id(id)
+                .user(user)
+                .tokenValue(id.toString())
+                .position(position)
+                .deleted(false)
+                .build();
     }
 }

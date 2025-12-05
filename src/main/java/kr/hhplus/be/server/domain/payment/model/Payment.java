@@ -10,8 +10,8 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-@Data
 @Entity
+@Getter
 @Builder
 @EntityListeners(AuditingEntityListener.class)
 @Table(name = "PAYMENTS",

@@ -2,15 +2,20 @@ package kr.hhplus.be.server.domain.concert.model;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-@Data
 @Entity
+@Getter
+@Builder
 @Table(name = "concerts")
+@EntityListeners(AuditingEntityListener.class)
 public class Concert {
     @Id
     @Column(name = "id", columnDefinition = "BINARY(16)")
@@ -22,13 +27,15 @@ public class Concert {
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
 
+    @CreatedDate
     @Column(name = "created_at", nullable = false)
-    private LocalDateTime createdAt = LocalDateTime.now();
+    private LocalDateTime createdAt;
 
+    @LastModifiedDate
     @Column(name = "updated_at", nullable = false)
-    private LocalDateTime updatedAt = LocalDateTime.now();
+    private LocalDateTime updatedAt;
 
-    // Date와 양방향 연관관계
+    @Builder.Default
     @OneToMany(
             mappedBy = "concert",
             cascade = CascadeType.ALL,

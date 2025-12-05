@@ -11,7 +11,6 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Setter
 @Getter
 @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -38,6 +37,7 @@ public class ConcertDate {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
+    @Builder.Default
     @Column(name = "deleted", nullable = false)
     private boolean deleted = false;
 
@@ -48,5 +48,9 @@ public class ConcertDate {
                 .eventDate(eventDate)
                 .deleted(false)
                 .build();
+    }
+
+    void setConcert(Concert concert) {
+        this.concert = concert;
     }
 }
