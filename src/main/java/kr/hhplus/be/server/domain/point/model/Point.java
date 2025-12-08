@@ -2,9 +2,7 @@ package kr.hhplus.be.server.domain.point.model;
 
 import jakarta.persistence.*;
 import kr.hhplus.be.server.domain.user.model.User;
-import lombok.Builder;
-import lombok.Data;
-import lombok.Getter;
+import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -15,6 +13,8 @@ import java.util.UUID;
 @Entity
 @Getter
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @Table(name = "POINTS")
 @EntityListeners(AuditingEntityListener.class)
 public class Point {
@@ -41,6 +41,7 @@ public class Point {
     @Column(nullable = false)
     private LocalDateTime updatedAt;
 
+    @Builder.Default
     @Column(nullable = false)
     private boolean deleted = false;
 

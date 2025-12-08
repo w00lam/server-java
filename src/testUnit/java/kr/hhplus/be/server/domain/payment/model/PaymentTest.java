@@ -1,7 +1,7 @@
 package kr.hhplus.be.server.domain.payment.model;
 
 import kr.hhplus.be.server.domain.reservation.model.Reservation;
-import kr.hhplus.be.server.test.unit.BaseUnitTest;
+import kr.hhplus.be.server.common.BaseUnitTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 

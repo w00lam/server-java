@@ -33,8 +33,9 @@ public class User {
     @Column(nullable = false, length = 100)
     private String name;
 
+    @Builder.Default
     @Column(nullable = false)
-    private int points = 0; // 결제/충전에 사용되는 필드
+    private int points = 0;
 
     @CreatedDate
     @Column(nullable = false, updatable = false)
@@ -44,6 +45,7 @@ public class User {
     @Column(nullable = false)
     private LocalDateTime updatedAt;
 
+    @Builder.Default
     @Column(nullable = false)
     private boolean deleted = false;
 

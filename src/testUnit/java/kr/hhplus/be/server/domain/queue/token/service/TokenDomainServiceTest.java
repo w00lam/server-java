@@ -2,7 +2,7 @@ package kr.hhplus.be.server.domain.queue.token.service;
 
 import kr.hhplus.be.server.domain.queue.token.model.Token;
 import kr.hhplus.be.server.domain.user.model.User;
-import kr.hhplus.be.server.test.unit.BaseUnitTest;
+import kr.hhplus.be.server.common.BaseUnitTest;
 import org.junit.jupiter.api.*;
 
 import static org.junit.jupiter.api.Assertions.*;

@@ -14,10 +14,13 @@ import java.util.UUID;
 @Entity
 @Getter
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @Table(name = "concerts")
 @EntityListeners(AuditingEntityListener.class)
 public class Concert {
     @Id
+    @GeneratedValue
     @Column(name = "id", columnDefinition = "BINARY(16)")
     private UUID id;
 

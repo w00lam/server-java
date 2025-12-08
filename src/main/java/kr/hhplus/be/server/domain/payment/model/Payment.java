@@ -13,6 +13,8 @@ import java.util.UUID;
 @Entity
 @Getter
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
 @Table(name = "PAYMENTS",
         indexes = {
@@ -20,7 +22,6 @@ import java.util.UUID;
                 @Index(name = "idx_status", columnList = "status")
         })
 public class Payment {
-
     @Id
     @GeneratedValue
     private UUID id;
@@ -50,14 +51,15 @@ public class Payment {
     @Column(nullable = false)
     private LocalDateTime updatedAt;
 
+    @Builder.Default
     @Column(nullable = false)
-    private boolean deleted;
+    private boolean deleted = false;
 
-    public static Payment createPending(Reservation reservation, int amount) {
+    public static Payment createPending(Reservation reservation, int amount, PaymentMethod method) {
         return Payment.builder()
-                .id(UUID.randomUUID())
                 .reservation(reservation)
                 .amount(amount)
+                .method(method)
                 .status(PaymentStatus.PENDING)
                 .paidAt(null)
                 .deleted(false)

@@ -1,6 +1,6 @@
 package kr.hhplus.be.server.domain.concert.model;
 
-import kr.hhplus.be.server.test.unit.BaseUnitTest;
+import kr.hhplus.be.server.common.BaseUnitTest;
 import org.junit.jupiter.api.*;
 
 import static org.junit.jupiter.api.Assertions.*;

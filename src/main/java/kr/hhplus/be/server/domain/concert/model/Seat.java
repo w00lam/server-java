@@ -18,14 +18,15 @@ import java.util.UUID;
 @Table(
         name = "seats",
         uniqueConstraints = @UniqueConstraint(
-                name = "uk_concert_date_section_row_number",
-                columnNames = {"concert_date_id", "section", "row", "number"}
+                name = "uk_concert_date_section_seat_row_number",
+                columnNames = {"concert_date_id", "section", "seat_row", "number"}
         ),
-        indexes = {@Index(name = "idx_concert_date_section_row",
-                columnList = "concert_date_id, section, row")}
+        indexes = {@Index(name = "idx_concert_date_section_seat_row",
+                columnList = "concert_date_id, section, seat_row")}
 )
 public class Seat {
     @Id
+    @GeneratedValue
     @Column(name = "id", columnDefinition = "BINARY(16)")
     private UUID id;
 
@@ -37,7 +38,7 @@ public class Seat {
     @Column(name = "section", length = 20, nullable = false)
     private String section;
 
-    @Column(name = "row", length = 5, nullable = false)
+    @Column(name = "seat_row", length = 5, nullable = false)
     private String row;
 
     @Column(name = "number", length = 5, nullable = false)

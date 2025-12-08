@@ -13,11 +13,13 @@ import java.util.UUID;
 @Entity
 @Getter
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
-@Table(name = "QUEUE_TOKENS",
-        uniqueConstraints = @UniqueConstraint(columnNames = "token"))
+@Table(name = "QUEUE_TOKENS", uniqueConstraints = @UniqueConstraint(columnNames = "token"))
 public class Token {
     @Id
+    @GeneratedValue
     @Column(name = "id", nullable = false, updatable = false)
     private UUID id;
 
@@ -39,16 +41,20 @@ public class Token {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
+    @Builder.Default
     @Column(name = "deleted", nullable = false)
-    private Boolean deleted;
+    private Boolean deleted = false;
+
+    @PrePersist
+    public void prePersist() {
+        if (this.tokenValue == null && this.id != null) {
+            this.tokenValue = String.valueOf(this.id);
+        }
+    }
 
     public static Token issue(User user, int position) {
-        UUID id = UUID.randomUUID();
-
         return Token.builder()
-                .id(id)
                 .user(user)
-                .tokenValue(id.toString())
                 .position(position)
                 .deleted(false)
                 .build();

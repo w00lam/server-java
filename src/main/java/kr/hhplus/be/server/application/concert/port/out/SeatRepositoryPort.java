@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.UUID;
 
 public interface SeatRepositoryPort {
+    Seat save(Seat seat);
     Seat findById(UUID seatId);
-
     List<Seat> findSeatsByConcertDateId(UUID concertDateId);
 }

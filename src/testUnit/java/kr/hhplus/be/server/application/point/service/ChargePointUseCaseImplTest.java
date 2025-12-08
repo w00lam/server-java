@@ -7,7 +7,7 @@ import kr.hhplus.be.server.application.user.port.out.UserRepositoryPort;
 import kr.hhplus.be.server.domain.point.model.Point;
 import kr.hhplus.be.server.domain.point.service.PointDomainService;
 import kr.hhplus.be.server.domain.user.model.User;
-import kr.hhplus.be.server.test.unit.BaseUnitTest;
+import kr.hhplus.be.server.common.BaseUnitTest;
 import org.junit.jupiter.api.*;
 import org.mockito.*;
 

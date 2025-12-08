@@ -3,7 +3,7 @@ package kr.hhplus.be.server.domain.point.service;
 import kr.hhplus.be.server.domain.point.model.Point;
 import kr.hhplus.be.server.domain.point.model.PointType;
 import kr.hhplus.be.server.domain.user.model.User;
-import kr.hhplus.be.server.test.unit.BaseUnitTest;
+import kr.hhplus.be.server.common.BaseUnitTest;
 import org.junit.jupiter.api.*;
 
 import java.util.List;

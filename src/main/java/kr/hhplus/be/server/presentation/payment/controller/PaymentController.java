@@ -19,7 +19,7 @@ public class PaymentController {
 
     @PostMapping
     public ResponseEntity<PaymentResponse> createPayment(@RequestBody PaymentRequest request) {
-        var result = makePaymentUseCase.execute(new MakePaymentCommand(request.reservationId(), request.amount()));
+        var result = makePaymentUseCase.execute(new MakePaymentCommand(request.reservationId(), request.amount(), request.method()));
         var response = PaymentResponse.from(result);
         return ResponseEntity.ok(response);
     }

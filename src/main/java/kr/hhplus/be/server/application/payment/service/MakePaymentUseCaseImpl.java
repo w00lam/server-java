@@ -22,7 +22,7 @@ public class MakePaymentUseCaseImpl implements MakePaymentUseCase {
     public MakePaymentResult execute(MakePaymentCommand command) {
         Reservation reservation = reservationRepositoryPort.findById(command.reservationId());
         paymentDomainService.validateAmount(command.amount());
-        Payment payment = paymentDomainService.createPending(reservation, command.amount());
+        Payment payment = paymentDomainService.createPending(reservation, command.amount(), command.method());
         Payment saved = paymentRepositoryPort.save(payment);
 
         return new MakePaymentResult(saved.getId(), saved.getStatus().name());

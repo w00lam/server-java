@@ -5,7 +5,7 @@ import kr.hhplus.be.server.application.point.port.in.GetPointResult;
 import kr.hhplus.be.server.application.point.port.out.PointRepositoryPort;
 import kr.hhplus.be.server.domain.point.model.Point;
 import kr.hhplus.be.server.domain.point.service.PointDomainService;
-import kr.hhplus.be.server.test.unit.BaseUnitTest;
+import kr.hhplus.be.server.common.BaseUnitTest;
 import org.junit.jupiter.api.*;
 import org.mockito.*;
 

@@ -2,9 +2,11 @@ package kr.hhplus.be.server.domain.point.service;
 
 import kr.hhplus.be.server.domain.point.model.Point;
 import kr.hhplus.be.server.domain.user.model.User;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
 
+@Component
 public class PointDomainService {
     public Point createCharge(User user, int amount) {
         if (amount <= 0) throw new IllegalArgumentException("Amount must be positive");

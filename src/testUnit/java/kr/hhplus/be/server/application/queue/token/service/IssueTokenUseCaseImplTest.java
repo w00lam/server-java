@@ -7,7 +7,7 @@ import kr.hhplus.be.server.application.user.port.out.UserRepositoryPort;
 import kr.hhplus.be.server.domain.queue.token.model.Token;
 import kr.hhplus.be.server.domain.queue.token.service.TokenDomainService;
 import kr.hhplus.be.server.domain.user.model.User;
-import kr.hhplus.be.server.test.unit.BaseUnitTest;
+import kr.hhplus.be.server.common.BaseUnitTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;

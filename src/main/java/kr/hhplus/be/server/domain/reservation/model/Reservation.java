@@ -3,9 +3,7 @@ package kr.hhplus.be.server.domain.reservation.model;
 import jakarta.persistence.*;
 import kr.hhplus.be.server.domain.concert.model.Seat;
 import kr.hhplus.be.server.domain.user.model.User;
-import lombok.Builder;
-import lombok.Data;
-import lombok.Getter;
+import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -18,11 +16,13 @@ import java.util.UUID;
 @Entity
 @Getter
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
 @Table(name = "RESERVATIONS",
         uniqueConstraints = @UniqueConstraint(
                 name = "uk_seat_status",
-                columnNames = {"seatId", "status"} // status가 TEMP_HOLD, CONFIRMED일 때만 체크는 DB 스키마에서 partial index 필요
+                columnNames = {"seat_Id", "status"}
         ),
         indexes = {
                 @Index(name = "idx_status_tempHoldExpiresAt", columnList = "status,tempHoldExpiresAt")
@@ -30,6 +30,7 @@ import java.util.UUID;
 )
 public class Reservation {
     @Id
+    @GeneratedValue
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
@@ -55,15 +56,15 @@ public class Reservation {
     @LastModifiedDate
     private LocalDateTime updatedAt;
 
+    @Builder.Default
     @Column(nullable = false)
-    private boolean deleted;
+    private boolean deleted = false;
 
     public static Reservation create(User user, Seat seat, Clock clock, ReservationExpirationPolicy expirationPolicy) {
         LocalDateTime now = LocalDateTime.now(clock);
         LocalDateTime expires = expirationPolicy.expiresAt(now);
 
         return Reservation.builder()
-                .id(UUID.randomUUID())
                 .user(user)
                 .seat(seat)
                 .status(ReservationStatus.TEMP_HOLD)

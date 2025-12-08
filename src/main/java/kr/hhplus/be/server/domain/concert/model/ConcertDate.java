@@ -19,6 +19,7 @@ import java.util.UUID;
 @Table(name = "concert_dates", uniqueConstraints = {@UniqueConstraint(name = "uk_concert_event_date", columnNames = {"concert_id", "event_date"})})
 public class ConcertDate {
     @Id
+    @GeneratedValue
     @Column(name = "id", columnDefinition = "BINARY(16)")
     private UUID id;
 
@@ -43,7 +44,6 @@ public class ConcertDate {
 
     public static ConcertDate create(Concert concert, LocalDate eventDate) {
         return ConcertDate.builder()
-                .id(UUID.randomUUID())
                 .concert(concert)
                 .eventDate(eventDate)
                 .deleted(false)

@@ -51,11 +51,6 @@ dependencies {
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
-tasks.withType<Test> {
-    useJUnitPlatform()
-    systemProperty("user.timezone", "UTC")
-}
-
 sourceSets {
     create("testUnit") {
         java.srcDir("src/testUnit/java")
@@ -63,12 +58,32 @@ sourceSets {
         compileClasspath = files(sourceSets["main"].output, configurations.testCompileClasspath)
         runtimeClasspath = files(output, compileClasspath, configurations.testRuntimeClasspath)
     }
+
+    create("testIntegration") {
+        java.srcDir("src/testIntegration/java")
+        resources.srcDir("src/testIntegration/resources")
+        resources.srcDir("src/test/resources")
+        compileClasspath = files(sourceSets["main"].output, configurations.testCompileClasspath)
+        runtimeClasspath = files(output, compileClasspath, configurations.testRuntimeClasspath)
+    }
 }
+
+tasks.withType<Test> {
+    useJUnitPlatform()
+    systemProperty("user.timezone", "UTC")
+
+    testClassesDirs += sourceSets["testIntegration"].output.classesDirs
+    classpath += sourceSets["testIntegration"].runtimeClasspath
+}
+
 
 @Suppress("UnstableApiUsage")
 configurations {
     getByName("testUnitImplementation").extendsFrom(configurations.getByName("testImplementation"))
     getByName("testUnitRuntimeOnly").extendsFrom(configurations.getByName("testRuntimeOnly"))
+
+    getByName("testIntegrationImplementation").extendsFrom(configurations.getByName("testImplementation"))
+    getByName("testIntegrationRuntimeOnly").extendsFrom(configurations.getByName("testRuntimeOnly"))
 }
 
 tasks.register<Test>("testUnit") {
@@ -76,4 +91,11 @@ tasks.register<Test>("testUnit") {
     group = "verification"
     testClassesDirs = sourceSets["testUnit"].output.classesDirs
     classpath = sourceSets["testUnit"].runtimeClasspath
+}
+
+tasks.register<Test>("testIntegration") {
+    description = "Run integration tests"
+    group = "verification"
+    testClassesDirs = sourceSets["testIntegration"].output.classesDirs
+    classpath = sourceSets["testIntegration"].runtimeClasspath
 }

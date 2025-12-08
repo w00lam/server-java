@@ -4,7 +4,7 @@ import kr.hhplus.be.server.application.concert.port.in.GetSeatsQuery;
 import kr.hhplus.be.server.application.concert.port.in.GetSeatsResult;
 import kr.hhplus.be.server.application.concert.port.out.SeatRepositoryPort;
 import kr.hhplus.be.server.domain.concert.model.Seat;
-import kr.hhplus.be.server.test.unit.BaseUnitTest;
+import kr.hhplus.be.server.common.BaseUnitTest;
 import org.junit.jupiter.api.*;
 import org.mockito.*;
 

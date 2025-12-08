@@ -4,7 +4,7 @@ import kr.hhplus.be.server.application.concert.port.in.GetConcertDatesQuery;
 import kr.hhplus.be.server.application.concert.port.in.GetConcertDatesResult;
 import kr.hhplus.be.server.application.concert.port.out.ConcertDateRepositoryPort;
 import kr.hhplus.be.server.domain.concert.model.ConcertDate;
-import kr.hhplus.be.server.test.unit.BaseUnitTest;
+import kr.hhplus.be.server.common.BaseUnitTest;
 import org.junit.jupiter.api.*;
 import org.mockito.*;
 

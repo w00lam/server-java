@@ -1,6 +1,6 @@
 package kr.hhplus.be.server.domain.reservation.model;
 
-import kr.hhplus.be.server.test.unit.BaseUnitTest;
+import kr.hhplus.be.server.common.BaseUnitTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
