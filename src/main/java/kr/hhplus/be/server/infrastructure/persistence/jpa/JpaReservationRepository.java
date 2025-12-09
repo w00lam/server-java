@@ -12,7 +12,17 @@ import java.util.UUID;
 
 public interface JpaReservationRepository extends JpaRepository<Reservation, UUID> {
     @Modifying
+    @Query("UPDATE Reservation r SET r.status = 'CONFIRMED', r.confirmedAt = CURRENT_TIMESTAMP WHERE r.id = :reservationId" +
+            "AND r.status = 'TEMP_HOLD'" +
+            "AND r.tempHoldExpiresAt > CURRENT_TIMESTAMP"
+            )
+    int confirmIfNotExpired(@Param("reservationId") UUID reservationId);
+
+    @Modifying
+    @Query("UPDATE Reservation r SET r.status = 'EXPIRED' WHERE r.status = 'TEMP_HOLD'AND r.tempHoldExpiresAt <= CURRENT_TIMESTAMP")
+    int expireAllExpired();
+
+    @Modifying
     @Query("UPDATE Reservation r SET r.tempHoldExpiresAt = :expiresAt WHERE r.id = :reservationId")
-    void updateExpiration(@Param("reservationId") UUID reservationId,
-                         @Param("expiresAt") LocalDateTime expiresAt);
+    void extendExpiration(@Param("reservationId") UUID reservationId, @Param("expiresAt") LocalDateTime expiresAt);
 }

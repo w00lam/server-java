@@ -16,16 +16,22 @@ public class ReservationRepositoryImpl implements ReservationRepositoryPort {
 
     @Override
     public Reservation findById(UUID reservationId) {
-        return jpa.findById(reservationId).orElseThrow(() -> new IllegalArgumentException("Reservation not found: " + reservationId));
+        return jpa.findById(reservationId)
+                .orElseThrow(() -> new IllegalArgumentException("Reservation not found: " + reservationId));
+    }
+
+    @Override
+    public boolean confirmIfNotExpired(UUID reservationId) {
+        return jpa.confirmIfNotExpired(reservationId) == 1;
+    }
+
+    @Override
+    public int expireAllExpired() {
+        return jpa.expireAllExpired();
     }
 
     @Override
     public Reservation save(Reservation reservation) {
         return jpa.save(reservation);
-    }
-
-    @Override
-    public void updateExpiration(UUID reservationId, LocalDateTime expirationTime) {
-        jpa.updateExpiration(reservationId, expirationTime);
     }
 }

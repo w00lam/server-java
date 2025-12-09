@@ -12,6 +12,7 @@ import kr.hhplus.be.server.domain.reservation.model.ReservationExpirationPolicy;
 import kr.hhplus.be.server.domain.user.model.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
 
@@ -25,6 +26,7 @@ public class MakeReservationUseCaseImpl implements MakeReservationUseCase {
     private final Clock clock;
 
     @Override
+    @Transactional
     public MakeReservationResult execute(MakeReservationCommand command) {
         User user = userRepositoryPort.findById(command.userId());
         Seat seat = seatRepositoryPort.findById(command.seatId());

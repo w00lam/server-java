@@ -11,22 +11,19 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class TokenTest extends BaseUnitTest {
     @Test
-    @DisplayName("issue()는 새로운 토큰을 발급해야 하며 id·tokenValue·position·deleted가 올바르게 설정된다")
+    @DisplayName("issue()는 새로운 토큰을 발급해야 하며 id·tokenValue·deleted가 올바르게 설정된다")
     void issue_shouldCreateTokenCorrectly() {
         // given
         User user = User.builder()
                 .id(fixedUUID())
                 .build();
 
-        int position = 12;
-
         // when
-        Token token = Token.issue(user, position);
+        Token token = Token.issue(user);
 
         // then
         assertNotNull(token.getId(), "issue는 UUID를 생성해야 한다");
         assertEquals(user, token.getUser());
-        assertEquals(position, token.getPosition());
         assertEquals(token.getId().toString(), token.getTokenValue());
         assertFalse(token.getDeleted());
 

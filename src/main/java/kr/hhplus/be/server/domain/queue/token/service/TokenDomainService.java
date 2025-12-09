@@ -6,8 +6,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class TokenDomainService {
-    public Token issueToken(User user, Integer lastPosition) {
-        int nextPosition = (lastPosition == null) ? 0 : lastPosition + 1;
-        return Token.issue(user, nextPosition);
+    public Token issueToken(User user) {
+        return Token.issue(user);
     }
 }

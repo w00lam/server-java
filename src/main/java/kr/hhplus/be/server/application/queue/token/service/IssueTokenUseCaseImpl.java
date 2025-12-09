@@ -10,6 +10,7 @@ import kr.hhplus.be.server.domain.queue.token.service.TokenDomainService;
 import kr.hhplus.be.server.domain.user.model.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -19,12 +20,12 @@ public class IssueTokenUseCaseImpl implements IssueTokenUseCase {
     private final TokenDomainService tokenDomainService;
 
     @Override
+    @Transactional
     public IssueTokenResult execute(IssueTokenCommand command) {
         User user = userRepositoryPort.findById(command.userID());
-        Integer lastPosition = tokenRepositoryPort.findLastPosition();
-        Token issued = tokenDomainService.issueToken(user, lastPosition);
+        Token issued = tokenDomainService.issueToken(user);
         tokenRepositoryPort.save(issued);
 
-        return new IssueTokenResult(issued.getTokenValue(), issued.getPosition());
+        return new IssueTokenResult(issued.getTokenValue());
     }
 }

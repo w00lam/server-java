@@ -14,7 +14,7 @@ public class TokenDomainServiceTest extends BaseUnitTest {
     @DisplayName("issueToken: lastPosition이 null이면 position 0으로 발급")
     void issueToken_nullLastPosition() {
         User user = User.builder().id(fixedUUID()).build();
-        Token token = service.issueToken(user, null);
+        Token token = service.issueToken(user);
 
         assertNotNull(token);
         assertEquals(user, token.getUser());
@@ -27,7 +27,7 @@ public class TokenDomainServiceTest extends BaseUnitTest {
     @DisplayName("issueToken: lastPosition이 존재하면 nextPosition 발급")
     void issueToken_withLastPosition() {
         User user = User.builder().id(fixedUUID()).build();
-        Token token = service.issueToken(user, 5);
+        Token token = service.issueToken(user);
 
         assertNotNull(token);
         assertEquals(user, token.getUser());
