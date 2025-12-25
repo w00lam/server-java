@@ -9,8 +9,14 @@ import java.util.UUID;
 
 public interface ReservationRepositoryPort {
     Reservation findById(UUID reservationId);
+
     boolean confirmIfNotExpired(UUID reservationId);
+
     int expireAllExpired();
+
     Reservation save(Reservation reservation);
+
     boolean existsBySeatAndStatus(Seat seat, ReservationStatus status);
+
+    long countBySeatAndStatus(Seat seat, ReservationStatus status);
 }

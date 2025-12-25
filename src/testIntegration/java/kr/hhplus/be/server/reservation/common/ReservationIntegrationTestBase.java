@@ -34,6 +34,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -109,11 +110,49 @@ public abstract class ReservationIntegrationTestBase {
         return saved;
     }
 
+    protected User createUserWithPoints(int points) {
+        User user = User.builder()
+                .email("test-user-" + UUID.randomUUID() + "@example.com")
+                .name("tester")
+                .points(points)
+                .deleted(false)
+                .build();
+
+        User saved = userRepository.save(user);
+
+        return saved;
+    }
+
     /*
      * =========================
      *    HELPER: CREATE Seat
      * =========================
      */
+    protected Seat createSeat() {
+        Concert concert = concertRepository.save(
+                Concert.builder()
+                        .title("테스트 콘서트")
+                        .build()
+        );
+
+        ConcertDate concertDate = concertDateRepository.save(
+                ConcertDate.create(concert, LocalDate.now())
+        );
+
+        Seat seat = Seat.builder()
+                .concertDate(concertDate)
+                .section("A")
+                .row("1")
+                .number("1")
+                .grade("VIP")
+                .deleted(false)
+                .build();
+
+        Seat saved = seatRepository.save(seat);
+
+        return saved;
+    }
+
     protected Seat createSeatWithConcert(ConcertDate concertDate, String section, String row, String number, String grade) {
         Concert concert = Concert.builder()
                 .title("test-title")
