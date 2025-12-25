@@ -1,6 +1,7 @@
 package kr.hhplus.be.server.domain.concert.service;
 
 import kr.hhplus.be.server.domain.payment.model.Payment;
+import kr.hhplus.be.server.domain.payment.model.PaymentMethod;
 import kr.hhplus.be.server.domain.payment.model.PaymentStatus;
 import kr.hhplus.be.server.domain.payment.service.PaymentDomainService;
 import kr.hhplus.be.server.domain.reservation.model.Reservation;
@@ -29,7 +30,7 @@ public class PaymentDomainServiceTest extends BaseUnitTest {
     @DisplayName("createPending: Payment 객체 정상 생성")
     void createPending_createsPayment() {
         Reservation reservation = Reservation.builder().id(fixedUUID()).build();
-        Payment payment = service.createPending(reservation, 5000);
+        Payment payment = service.createPending(reservation, 5000, PaymentMethod.CARD);
 
         assertNotNull(payment);
         assertEquals(5000, payment.getAmount());

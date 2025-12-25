@@ -32,4 +32,9 @@ public interface JpaReservationRepository extends JpaRepository<Reservation, UUI
     boolean existsBySeatAndStatus(Seat seat, ReservationStatus status);
 
     long countBySeatAndStatus(Seat seat, ReservationStatus status);
+
+    @Modifying
+    @Query("UPDATE Reservation r SET r.tempHoldExpiresAt = :expiredAt WHERE r.id = :reservationId")
+    void forceExpire(@Param("reservationId") UUID reservationId, @Param("expiredAt") LocalDateTime expiredAt);
+
 }

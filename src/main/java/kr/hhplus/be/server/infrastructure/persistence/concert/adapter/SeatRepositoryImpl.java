@@ -6,6 +6,7 @@ import kr.hhplus.be.server.infrastructure.persistence.jpa.JpaSeatRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -32,5 +33,10 @@ public class SeatRepositoryImpl implements SeatRepositoryPort {
     @Override
     public List<Seat> findSeatsByConcertDateId(UUID concertDateId) {
         return jpa.findAllByConcertDate_Id(concertDateId);
+    }
+
+    @Override
+    public List<Seat> findSeatsByConcertDateIdForHoldRelease(LocalDateTime now) {
+        return jpa.findByHoldUntilBeforeAndDeletedFalse(now);
     }
 }

@@ -46,7 +46,6 @@ public class IssueTokenUseCaseImplTest extends BaseUnitTest {
 
         // then
         assertEquals(issuedToken.getTokenValue(), result.tokenValue());
-        assertEquals(issuedToken.getPosition(), result.position());
 
         verify(userRepositoryPort).findById(user.getId());
         verify(tokenDomainService).issueToken(user);

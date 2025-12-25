@@ -31,7 +31,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
@@ -93,7 +92,6 @@ public abstract class ReservationIntegrationTestBase {
      *    HELPER: CREATE USER
      * =========================
      */
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
     protected User createUser() {
         User user = User.builder()
                 .email("test-user-" + UUID.randomUUID() + "@example.com")
@@ -154,10 +152,6 @@ public abstract class ReservationIntegrationTestBase {
     }
 
     protected Seat createSeatWithConcert(ConcertDate concertDate, String section, String row, String number, String grade) {
-        Concert concert = Concert.builder()
-                .title("test-title")
-                .build();
-        concert = concertRepository.save(concert);
         Seat seat = Seat.builder()
                 .concertDate(concertDate)
                 .section(section)

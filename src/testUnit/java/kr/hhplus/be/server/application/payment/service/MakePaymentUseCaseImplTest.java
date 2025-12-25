@@ -5,6 +5,7 @@ import kr.hhplus.be.server.application.payment.port.in.MakePaymentResult;
 import kr.hhplus.be.server.application.payment.port.out.PaymentRepositoryPort;
 import kr.hhplus.be.server.application.reservation.port.out.ReservationRepositoryPort;
 import kr.hhplus.be.server.domain.payment.model.Payment;
+import kr.hhplus.be.server.domain.payment.model.PaymentMethod;
 import kr.hhplus.be.server.domain.payment.model.PaymentStatus;
 import kr.hhplus.be.server.domain.payment.service.PaymentDomainService;
 import kr.hhplus.be.server.domain.reservation.model.Reservation;
@@ -37,7 +38,7 @@ public class MakePaymentUseCaseImplTest extends BaseUnitTest {
         UUID reservationId = fixedUUID();
         int amount = 10000;
 
-        MakePaymentCommand command = new MakePaymentCommand(reservationId, amount);
+        MakePaymentCommand command = new MakePaymentCommand(reservationId, amount, PaymentMethod.CARD);
 
         Reservation reservation = Reservation.builder()
                 .id(reservationId)
@@ -59,7 +60,7 @@ public class MakePaymentUseCaseImplTest extends BaseUnitTest {
 
         when(reservationRepositoryPort.findById(reservationId)).thenReturn(reservation);
         doNothing().when(paymentDomainService).validateAmount(amount);
-        when(paymentDomainService.createPending(reservation, amount)).thenReturn(pendingPayment);
+        when(paymentDomainService.createPending(reservation, amount, PaymentMethod.CASH)).thenReturn(pendingPayment);
         when(paymentRepositoryPort.save(pendingPayment)).thenReturn(savedPayment);
 
         // when
@@ -71,7 +72,7 @@ public class MakePaymentUseCaseImplTest extends BaseUnitTest {
 
         verify(reservationRepositoryPort).findById(reservationId);
         verify(paymentDomainService).validateAmount(amount);
-        verify(paymentDomainService).createPending(reservation, amount);
+        verify(paymentDomainService).createPending(reservation, amount, PaymentMethod.CASH);
         verify(paymentRepositoryPort).save(pendingPayment);
     }
 }

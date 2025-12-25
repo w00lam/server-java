@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -19,4 +20,7 @@ public interface JpaSeatRepository extends JpaRepository<Seat, UUID> {
     Optional<Seat> findByIdForUpdate(@Param("seatId") UUID seatId);
 
     List<Seat> findAllByConcertDate_Id(UUID concertDateId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    List<Seat> findByHoldUntilBeforeAndDeletedFalse(LocalDateTime now);
 }

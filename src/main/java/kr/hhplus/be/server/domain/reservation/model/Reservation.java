@@ -60,6 +60,7 @@ public class Reservation {
     @Column(nullable = false)
     private boolean deleted = false;
 
+
     public static Reservation create(User user, Seat seat, Clock clock, ReservationExpirationPolicy expirationPolicy) {
         LocalDateTime now = LocalDateTime.now(clock);
         LocalDateTime expires = expirationPolicy.expiresAt(now);

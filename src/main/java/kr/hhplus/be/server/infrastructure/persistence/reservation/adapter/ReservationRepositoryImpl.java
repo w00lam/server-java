@@ -8,7 +8,6 @@ import kr.hhplus.be.server.domain.reservation.model.Reservation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Repository
@@ -25,11 +24,6 @@ public class ReservationRepositoryImpl implements ReservationRepositoryPort {
     @Override
     public boolean confirmIfNotExpired(UUID reservationId) {
         return jpa.confirmIfNotExpired(reservationId) == 1;
-    }
-
-    @Override
-    public int expireAllExpired() {
-        return jpa.expireAllExpired();
     }
 
     @Override
