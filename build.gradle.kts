@@ -45,6 +45,7 @@ dependencies {
     // Test
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.springframework.boot:spring-boot-testcontainers")
+    testImplementation("org.springframework.boot:spring-boot-starter-data-jpa")
     testImplementation("org.testcontainers:junit-jupiter")
     testImplementation("org.testcontainers:mysql")
 
@@ -55,16 +56,16 @@ sourceSets {
     create("testUnit") {
         java.srcDir("src/testUnit/java")
         resources.srcDir("src/testUnit/resources")
-        compileClasspath = files(sourceSets["main"].output, configurations.testCompileClasspath)
-        runtimeClasspath = files(output, compileClasspath, configurations.testRuntimeClasspath)
+        compileClasspath += sourceSets["main"].output
+        runtimeClasspath += output + compileClasspath
     }
 
     create("testIntegration") {
         java.srcDir("src/testIntegration/java")
         resources.srcDir("src/testIntegration/resources")
         resources.srcDir("src/test/resources")
-        compileClasspath = files(sourceSets["main"].output, configurations.testCompileClasspath)
-        runtimeClasspath = files(output, compileClasspath, configurations.testRuntimeClasspath)
+        compileClasspath += sourceSets["main"].output
+        runtimeClasspath += output + compileClasspath
     }
 }
 

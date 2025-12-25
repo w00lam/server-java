@@ -31,9 +31,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -92,6 +92,7 @@ public abstract class ReservationIntegrationTestBase {
      *    HELPER: CREATE USER
      * =========================
      */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     protected User createUser() {
         User user = User.builder()
                 .email("test-user-" + UUID.randomUUID() + "@example.com")
@@ -104,8 +105,6 @@ public abstract class ReservationIntegrationTestBase {
 
 
         User saved = userRepository.save(user);
-        em.flush();
-        em.clear();
 
         return saved;
     }
@@ -128,8 +127,6 @@ public abstract class ReservationIntegrationTestBase {
                 .grade(grade)
                 .build();
         Seat saved = seatRepository.save(seat);
-        em.flush();
-        em.clear();
 
         return saved;
     }

@@ -25,6 +25,11 @@ public class SeatRepositoryImpl implements SeatRepositoryPort {
     }
 
     @Override
+    public Seat findByIdForUpdate(UUID seatId) {
+        return jpa.findByIdForUpdate(seatId).orElseThrow(() -> new IllegalArgumentException("Seat not found: " + seatId));
+    }
+
+    @Override
     public List<Seat> findSeatsByConcertDateId(UUID concertDateId) {
         return jpa.findAllByConcertDate_Id(concertDateId);
     }

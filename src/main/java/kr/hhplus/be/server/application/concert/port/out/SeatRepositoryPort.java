@@ -8,5 +8,8 @@ import java.util.UUID;
 public interface SeatRepositoryPort {
     Seat save(Seat seat);
     Seat findById(UUID seatId);
+
+    Seat findByIdForUpdate(UUID seatId);
+
     List<Seat> findSeatsByConcertDateId(UUID concertDateId);
 }

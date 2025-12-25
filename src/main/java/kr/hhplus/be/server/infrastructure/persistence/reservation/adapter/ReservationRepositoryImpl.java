@@ -1,6 +1,8 @@
 package kr.hhplus.be.server.infrastructure.persistence.reservation.adapter;
 
 import kr.hhplus.be.server.application.reservation.port.out.ReservationRepositoryPort;
+import kr.hhplus.be.server.domain.concert.model.Seat;
+import kr.hhplus.be.server.domain.reservation.model.ReservationStatus;
 import kr.hhplus.be.server.infrastructure.persistence.jpa.JpaReservationRepository;
 import kr.hhplus.be.server.domain.reservation.model.Reservation;
 import lombok.RequiredArgsConstructor;
@@ -33,5 +35,10 @@ public class ReservationRepositoryImpl implements ReservationRepositoryPort {
     @Override
     public Reservation save(Reservation reservation) {
         return jpa.save(reservation);
+    }
+
+    @Override
+    public boolean existsBySeatAndStatus(Seat seat, ReservationStatus status) {
+        return jpa.existsBySeatAndStatus(seat, status);
     }
 }
