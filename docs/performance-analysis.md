@@ -1,11 +1,13 @@
 # Performance Analysis
 
 ## 1. 목적
+
 고빈도 조회 쿼리 및 주요 테이블 성능을 분석하고, 개발 진행에 따라 점진적으로 기록하기 위한 문서.
 
 ---
 
 ## 2. 분석 대상
+
 - **테이블** : `seats`, `reservations`, `payments`, `concert_date` 등  
 - **중점** : 조회 쿼리 성능, 인덱스 활용, row 수, 동시성 영향
 

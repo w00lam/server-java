@@ -161,6 +161,7 @@ Client → API Gateway → Server(Java)
 ---
 
 ## 📂 Documentation Map
+
 | 문서               |
 | ---------------- |
 | **[API 전체 스펙 정의  ](docs/openapi.yml)** |
