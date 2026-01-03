@@ -104,8 +104,19 @@ public abstract class ReservationIntegrationTestBase {
 
 
         User saved = userRepository.save(user);
-        em.flush();
-        em.clear();
+
+        return saved;
+    }
+
+    protected User createUserWithPoints(int points) {
+        User user = User.builder()
+                .email("test-user-" + UUID.randomUUID() + "@example.com")
+                .name("tester")
+                .points(points)
+                .deleted(false)
+                .build();
+
+        User saved = userRepository.save(user);
 
         return saved;
     }
@@ -115,11 +126,32 @@ public abstract class ReservationIntegrationTestBase {
      *    HELPER: CREATE Seat
      * =========================
      */
-    protected Seat createSeatWithConcert(ConcertDate concertDate, String section, String row, String number, String grade) {
-        Concert concert = Concert.builder()
-                .title("test-title")
+    protected Seat createSeat() {
+        Concert concert = concertRepository.save(
+                Concert.builder()
+                        .title("테스트 콘서트")
+                        .build()
+        );
+
+        ConcertDate concertDate = concertDateRepository.save(
+                ConcertDate.create(concert, LocalDate.now())
+        );
+
+        Seat seat = Seat.builder()
+                .concertDate(concertDate)
+                .section("A")
+                .row("1")
+                .number("1")
+                .grade("VIP")
+                .deleted(false)
                 .build();
-        concert = concertRepository.save(concert);
+
+        Seat saved = seatRepository.save(seat);
+
+        return saved;
+    }
+
+    protected Seat createSeatWithConcert(ConcertDate concertDate, String section, String row, String number, String grade) {
         Seat seat = Seat.builder()
                 .concertDate(concertDate)
                 .section(section)
@@ -128,8 +160,6 @@ public abstract class ReservationIntegrationTestBase {
                 .grade(grade)
                 .build();
         Seat saved = seatRepository.save(seat);
-        em.flush();
-        em.clear();
 
         return saved;
     }

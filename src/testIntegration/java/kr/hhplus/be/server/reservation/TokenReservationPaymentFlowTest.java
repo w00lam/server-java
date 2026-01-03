@@ -69,9 +69,6 @@ public class TokenReservationPaymentFlowTest extends ReservationIntegrationTestB
         // 첫 번째 유저 예약
         MakeReservationResult firstReservation = reserveSeat(firstUser.getId(), seat.getId());
 
-        // 좌석 만료 시뮬레이션
-        reservationRepository.updateExpiration(firstReservation.reservationId(), firstReservation.tempHoldExpiresAt().minusMinutes(10));
-
         // 다른 유저 생성 후 예약
         User secondUser = createUser();
         MakeReservationResult secondReservation = reserveSeat(secondUser.getId(), seat.getId());

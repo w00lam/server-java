@@ -15,10 +15,4 @@ public class TokenRepositoryImpl implements TokenRepositoryPort {
     public Token save(Token token) {
         return jpa.save(token);
     }
-
-    @Override
-    public Integer findLastPosition() {
-        Token token = jpa.findTopByOrderByPositionDesc();
-        return token != null ? token.getPosition() : 0;
-    }
 }

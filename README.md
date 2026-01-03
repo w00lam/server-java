@@ -161,12 +161,14 @@ Client → API Gateway → Server(Java)
 ---
 
 ## 📂 Documentation Map
-| 문서               | 설명                        |
-| ---------------- | ------------------------- |
-| **[openapi.yml](docs/openapi.yml)**  | API 전체 스펙 정의              |
-| **[erd.md](docs/erd.md)**       | ERD, 스키마 제약, 인덱스 설계       |
-| **[infra.md](docs/infra.md)**     | Infra, 배포 전략, 운영/모니터링     |
-| **[ssd.md](docs/ssd.md)**       | Sequence Flow: 예약·결제 시나리오 |
-| **[milestone.md](docs/milestone.md)** | 일정/마일스톤 + Gantt Chart     |
-| **[performance-analysis.md](docs/performance-analysis.md)** | 쿼리 성능 분석: 고빈도 조회, N+1, 대량 조인 등 |
+
+| 문서               |
+| ---------------- |
+| **[API 전체 스펙 정의  ](docs/openapi.yml)** |
+| **[ERD, 스키마 제약, 인덱스 설계](docs/erd.md)** |
+| **[Infra, 배포 전략, 운영/모니터링](docs/infra.md)** |
+| **[예약·결제 시나리오](docs/ssd.md)** |
+| **[마일스톤](docs/milestone.md)** |
+| **[쿼리 성능 분석](docs/performance-analysis.md)** |
+| **[좌석 예약 동시성 처리 보고서](docs/Seat_Reservation_Concurrency_Report_2025_12_25.md)** |
 ---

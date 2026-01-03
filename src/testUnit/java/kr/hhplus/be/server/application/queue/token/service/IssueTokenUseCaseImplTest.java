@@ -38,21 +38,17 @@ public class IssueTokenUseCaseImplTest extends BaseUnitTest {
         IssueTokenCommand command = new IssueTokenCommand(user.getId());
 
         when(userRepositoryPort.findById(user.getId())).thenReturn(user);
-        when(tokenRepositoryPort.findLastPosition()).thenReturn(5);
 
-        Token issuedToken = Token.issue(user, 6);
-        when(tokenDomainService.issueToken(user, 5)).thenReturn(issuedToken);
+        Token issuedToken = Token.issue(user);
 
         // when
         IssueTokenResult result = useCase.execute(command);
 
         // then
         assertEquals(issuedToken.getTokenValue(), result.tokenValue());
-        assertEquals(issuedToken.getPosition(), result.position());
 
         verify(userRepositoryPort).findById(user.getId());
-        verify(tokenRepositoryPort).findLastPosition();
-        verify(tokenDomainService).issueToken(user, 5);
+        verify(tokenDomainService).issueToken(user);
         verify(tokenRepositoryPort).save(issuedToken);
     }
 }

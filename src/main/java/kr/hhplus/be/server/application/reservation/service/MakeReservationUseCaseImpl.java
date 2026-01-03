@@ -9,9 +9,11 @@ import kr.hhplus.be.server.application.user.port.out.UserRepositoryPort;
 import kr.hhplus.be.server.domain.concert.model.Seat;
 import kr.hhplus.be.server.domain.reservation.model.Reservation;
 import kr.hhplus.be.server.domain.reservation.model.ReservationExpirationPolicy;
+import kr.hhplus.be.server.domain.reservation.model.ReservationStatus;
 import kr.hhplus.be.server.domain.user.model.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
 
@@ -25,9 +27,15 @@ public class MakeReservationUseCaseImpl implements MakeReservationUseCase {
     private final Clock clock;
 
     @Override
+    @Transactional
     public MakeReservationResult execute(MakeReservationCommand command) {
         User user = userRepositoryPort.findById(command.userId());
-        Seat seat = seatRepositoryPort.findById(command.seatId());
+        Seat seat = seatRepositoryPort.findByIdForUpdate(command.seatId());
+
+        if (reservationRepositoryPort.existsBySeatAndStatus(seat, ReservationStatus.TEMP_HOLD)
+                || reservationRepositoryPort.existsBySeatAndStatus(seat, ReservationStatus.CONFIRMED)) {
+            throw new IllegalStateException("Seat already reserved");
+        }
         Reservation tempHold = Reservation.create(user, seat, clock, policy);
         reservationRepositoryPort.save(tempHold);
 

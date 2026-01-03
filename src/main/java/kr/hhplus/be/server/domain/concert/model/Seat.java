@@ -11,6 +11,7 @@ import java.util.UUID;
 
 @Entity
 @Getter
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -58,4 +59,12 @@ public class Seat {
     @Builder.Default
     @Column(name = "deleted", nullable = false)
     private boolean deleted = false;
+
+    @Builder.Default
+    @Column(name = "held", nullable = false)
+    private boolean held = false;
+
+    @Column(name = "hold_until")
+    private LocalDateTime holdUntil;
+
 }

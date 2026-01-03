@@ -16,7 +16,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
-@Table(name = "QUEUE_TOKENS", uniqueConstraints = @UniqueConstraint(columnNames = "token"))
+@Table(name = "QUEUE_TOKENS", uniqueConstraints = {@UniqueConstraint(columnNames = "token_value"), @UniqueConstraint(columnNames = "position")})
 public class Token {
     @Id
     @GeneratedValue
@@ -30,8 +30,9 @@ public class Token {
     @Column(name = "token_value", nullable = false, unique = true)
     private String tokenValue;
 
-    @Column(name = "position", nullable = false)
-    private int position;
+    // 🔥 DB가 채우는 컬럼
+    @Column(name = "position", nullable = false, insertable = false, updatable = false)
+    private Integer position;
 
     @CreatedDate
     @Column(name = "created_at", nullable = false)
@@ -52,10 +53,9 @@ public class Token {
         }
     }
 
-    public static Token issue(User user, int position) {
+    public static Token issue(User user) {
         return Token.builder()
                 .user(user)
-                .position(position)
                 .deleted(false)
                 .build();
     }

@@ -19,7 +19,7 @@ public class PaymentTest extends BaseUnitTest {
         int amount = 40000;
 
         // when
-        Payment payment = Payment.createPending(reservation, amount);
+        Payment payment = Payment.createPending(reservation, amount, PaymentMethod.CARD);
 
         // then
         assertNotNull(payment.getId(), "ID는 생성되어야 한다");
