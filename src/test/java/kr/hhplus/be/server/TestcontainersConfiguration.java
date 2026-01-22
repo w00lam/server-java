@@ -12,8 +12,6 @@ class TestcontainersConfiguration {
     public static final GenericContainer<?> REDIS_CONTAINER;
 
     static {
-        System.setProperty("DOCKER_HOST", "npipe:////./pipe/dockerDesktopLinuxEngine");
-
         MYSQL_CONTAINER = new MySQLContainer<>(DockerImageName.parse("mysql:8.0"))
                 .withDatabaseName("hhplus")
                 .withUsername("test")

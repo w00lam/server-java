@@ -6,6 +6,7 @@ import kr.hhplus.be.server.application.concert.port.in.seat.GetSeatsUseCase;
 import kr.hhplus.be.server.application.concert.port.out.SeatRepositoryPort;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -16,6 +17,7 @@ public class GetSeatsUseCaseImpl implements GetSeatsUseCase {
     private final SeatRepositoryPort seatRepositoryPort;
 
     @Override
+    @Cacheable(value = "seats", key = "#query.concertDateId")
     public List<GetSeatsResult> execute(GetSeatsQuery query) {
         return seatRepositoryPort.findSeatsByConcertDateId(query.concertDateId())
                 .stream()
