@@ -1,8 +1,8 @@
 package kr.hhplus.be.server.application.concert.service;
 
-import kr.hhplus.be.server.application.concert.port.in.GetSeatsQuery;
-import kr.hhplus.be.server.application.concert.port.in.GetSeatsResult;
-import kr.hhplus.be.server.application.concert.port.in.GetSeatsUseCase;
+import kr.hhplus.be.server.application.concert.port.in.seat.GetSeatsQuery;
+import kr.hhplus.be.server.application.concert.port.in.seat.GetSeatsResult;
+import kr.hhplus.be.server.application.concert.port.in.seat.GetSeatsUseCase;
 import kr.hhplus.be.server.application.concert.port.out.SeatRepositoryPort;
 
 import lombok.RequiredArgsConstructor;

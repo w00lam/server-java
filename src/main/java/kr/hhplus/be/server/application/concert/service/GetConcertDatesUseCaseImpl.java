@@ -1,8 +1,8 @@
 package kr.hhplus.be.server.application.concert.service;
 
-import kr.hhplus.be.server.application.concert.port.in.GetConcertDatesQuery;
-import kr.hhplus.be.server.application.concert.port.in.GetConcertDatesResult;
-import kr.hhplus.be.server.application.concert.port.in.GetConcertDatesUseCase;
+import kr.hhplus.be.server.application.concert.port.in.concertdate.GetConcertDatesQuery;
+import kr.hhplus.be.server.application.concert.port.in.concertdate.GetConcertDatesResult;
+import kr.hhplus.be.server.application.concert.port.in.concertdate.GetConcertDatesUseCase;
 import kr.hhplus.be.server.application.concert.port.out.ConcertDateRepositoryPort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

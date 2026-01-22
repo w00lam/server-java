@@ -1,6 +1,6 @@
 package kr.hhplus.be.server.presentation.concert.dto;
 
-import kr.hhplus.be.server.application.concert.port.in.GetSeatsResult;
+import kr.hhplus.be.server.application.concert.port.in.seat.GetSeatsResult;
 
 import java.util.UUID;
 

@@ -22,7 +22,7 @@ public class ReservationController {
 
     @PostMapping
     public ResponseEntity<MakeReservationResponse> makeReservation(@RequestBody MakeReservationRequest request) {
-        var result = makeReservationUseCase.execute(new MakeReservationCommand(request.userId(), request.seatId()));
+        var result = makeReservationUseCase.execute(new MakeReservationCommand(request.userId(), request.concertId(), request.seatId()));
         var response = MakeReservationResponse.from(result);
 
         return ResponseEntity.ok(response);

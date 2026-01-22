@@ -34,6 +34,8 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-web")
+    implementation("org.springframework.boot:spring-boot-starter-data-redis")
+
 
     // DB
     runtimeOnly("com.mysql:mysql-connector-j")
@@ -52,51 +54,7 @@ dependencies {
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
-sourceSets {
-    create("testUnit") {
-        java.srcDir("src/testUnit/java")
-        resources.srcDir("src/testUnit/resources")
-        compileClasspath += sourceSets["main"].output
-        runtimeClasspath += output + compileClasspath
-    }
-
-    create("testIntegration") {
-        java.srcDir("src/testIntegration/java")
-        resources.srcDir("src/testIntegration/resources")
-        resources.srcDir("src/test/resources")
-        compileClasspath += sourceSets["main"].output
-        runtimeClasspath += output + compileClasspath
-    }
-}
-
 tasks.withType<Test> {
     useJUnitPlatform()
     systemProperty("user.timezone", "UTC")
-
-    testClassesDirs += sourceSets["testIntegration"].output.classesDirs
-    classpath += sourceSets["testIntegration"].runtimeClasspath
-}
-
-
-@Suppress("UnstableApiUsage")
-configurations {
-    getByName("testUnitImplementation").extendsFrom(configurations.getByName("testImplementation"))
-    getByName("testUnitRuntimeOnly").extendsFrom(configurations.getByName("testRuntimeOnly"))
-
-    getByName("testIntegrationImplementation").extendsFrom(configurations.getByName("testImplementation"))
-    getByName("testIntegrationRuntimeOnly").extendsFrom(configurations.getByName("testRuntimeOnly"))
-}
-
-tasks.register<Test>("testUnit") {
-    description = "Run unit tests"
-    group = "verification"
-    testClassesDirs = sourceSets["testUnit"].output.classesDirs
-    classpath = sourceSets["testUnit"].runtimeClasspath
-}
-
-tasks.register<Test>("testIntegration") {
-    description = "Run integration tests"
-    group = "verification"
-    testClassesDirs = sourceSets["testIntegration"].output.classesDirs
-    classpath = sourceSets["testIntegration"].runtimeClasspath
 }

@@ -1,7 +1,7 @@
 package kr.hhplus.be.server.infrastructure.persistence.concert.adapter;
 
 import kr.hhplus.be.server.application.concert.port.out.SeatRepositoryPort;
-import kr.hhplus.be.server.domain.concert.model.Seat;
+import kr.hhplus.be.server.domain.concert.model.seat.Seat;
 import kr.hhplus.be.server.infrastructure.persistence.jpa.JpaSeatRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
@@ -25,10 +25,10 @@ public class SeatRepositoryImpl implements SeatRepositoryPort {
         return jpa.findById(seatId).orElseThrow(() -> new IllegalArgumentException("Seat not found: " + seatId));
     }
 
-    @Override
+    /*@Override
     public Seat findByIdForUpdate(UUID seatId) {
         return jpa.findByIdForUpdate(seatId).orElseThrow(() -> new IllegalArgumentException("Seat not found: " + seatId));
-    }
+    }*/
 
     @Override
     public List<Seat> findSeatsByConcertDateId(UUID concertDateId) {

@@ -1,9 +1,9 @@
 package kr.hhplus.be.server.presentation.concert.controller;
 
-import kr.hhplus.be.server.application.concert.port.in.GetConcertDatesQuery;
-import kr.hhplus.be.server.application.concert.port.in.GetConcertDatesUseCase;
-import kr.hhplus.be.server.application.concert.port.in.GetSeatsQuery;
-import kr.hhplus.be.server.application.concert.port.in.GetSeatsUseCase;
+import kr.hhplus.be.server.application.concert.port.in.concertdate.GetConcertDatesQuery;
+import kr.hhplus.be.server.application.concert.port.in.concertdate.GetConcertDatesUseCase;
+import kr.hhplus.be.server.application.concert.port.in.seat.GetSeatsQuery;
+import kr.hhplus.be.server.application.concert.port.in.seat.GetSeatsUseCase;
 import kr.hhplus.be.server.presentation.concert.dto.ConcertDateResponse;
 import kr.hhplus.be.server.presentation.concert.dto.SeatResponse;
 import lombok.AllArgsConstructor;

@@ -1,7 +1,7 @@
 package kr.hhplus.be.server.infrastructure.persistence.jpa;
 
 import jakarta.persistence.LockModeType;
-import kr.hhplus.be.server.domain.concert.model.Seat;
+import kr.hhplus.be.server.domain.concert.model.seat.Seat;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
