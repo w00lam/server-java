@@ -1,11 +1,17 @@
 spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3307/hhplus?characterEncoding=UTF-8&serverTimezone=UTC
     username: test
     password: test
-    url: jdbc:mysql://localhost:3306/hhplus?characterEncoding=UTF-8&serverTimezone=UTC
+
+  data:
+    redis:
+      host: localhost
+      port: 6380
 
   jpa:
     hibernate:
       ddl-auto: update
     show-sql: true
+    open-in-view: false

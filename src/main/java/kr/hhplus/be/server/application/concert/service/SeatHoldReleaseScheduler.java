@@ -2,7 +2,7 @@ package kr.hhplus.be.server.application.concert.service;
 
 import jakarta.transaction.Transactional;
 import kr.hhplus.be.server.application.concert.port.out.SeatRepositoryPort;
-import kr.hhplus.be.server.domain.concert.model.Seat;
+import kr.hhplus.be.server.domain.concert.model.seat.Seat;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;

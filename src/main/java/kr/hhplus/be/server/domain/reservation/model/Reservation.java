@@ -1,7 +1,7 @@
 package kr.hhplus.be.server.domain.reservation.model;
 
 import jakarta.persistence.*;
-import kr.hhplus.be.server.domain.concert.model.Seat;
+import kr.hhplus.be.server.domain.concert.model.seat.Seat;
 import kr.hhplus.be.server.domain.user.model.User;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;

@@ -1,7 +1,7 @@
 package kr.hhplus.be.server.infrastructure.persistence.reservation.adapter;
 
 import kr.hhplus.be.server.application.reservation.port.out.ReservationRepositoryPort;
-import kr.hhplus.be.server.domain.concert.model.Seat;
+import kr.hhplus.be.server.domain.concert.model.seat.Seat;
 import kr.hhplus.be.server.domain.reservation.model.ReservationStatus;
 import kr.hhplus.be.server.infrastructure.persistence.jpa.JpaReservationRepository;
 import kr.hhplus.be.server.domain.reservation.model.Reservation;

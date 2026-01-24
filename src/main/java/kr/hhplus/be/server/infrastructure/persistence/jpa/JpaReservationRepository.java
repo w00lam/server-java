@@ -1,6 +1,6 @@
 package kr.hhplus.be.server.infrastructure.persistence.jpa;
 
-import kr.hhplus.be.server.domain.concert.model.Seat;
+import kr.hhplus.be.server.domain.concert.model.seat.Seat;
 import kr.hhplus.be.server.domain.reservation.model.Reservation;
 import kr.hhplus.be.server.domain.reservation.model.ReservationStatus;
 import org.springframework.data.jpa.repository.JpaRepository;

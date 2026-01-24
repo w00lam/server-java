@@ -171,4 +171,5 @@ Client → API Gateway → Server(Java)
 | **[마일스톤](docs/milestone.md)** |
 | **[쿼리 성능 분석](docs/performance-analysis.md)** |
 | **[좌석 예약 동시성 처리 보고서](docs/Seat_Reservation_Concurrency_Report_2025_12_25.md)** |
+| **[Redis 캐싱 전략 적용을 통한 조회 성능 개선 보고서](docs/Redis_Caching_Strategy_for_Improving_Read_Performance_Report_2026_01_22.md)** |
 ---
