@@ -1,10 +1,13 @@
 package kr.hhplus.be.server.application.reservation.service;
 
+import kr.hhplus.be.server.application.concert.service.GetConcertRankingService;
+import kr.hhplus.be.server.application.reservation.event.ReservationConfirmedEvent;
 import kr.hhplus.be.server.application.reservation.port.in.ConfirmReservationCommand;
 import kr.hhplus.be.server.application.reservation.port.in.ConfirmReservationResult;
 import kr.hhplus.be.server.application.reservation.port.in.ConfirmReservationUseCase;
 import kr.hhplus.be.server.application.reservation.port.out.ReservationRepositoryPort;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -12,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class ConfirmReservationUseCaseImpl implements ConfirmReservationUseCase {
     private final ReservationRepositoryPort reservationRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     @Transactional
@@ -22,8 +26,14 @@ public class ConfirmReservationUseCaseImpl implements ConfirmReservationUseCase 
             throw new IllegalStateException("Reservation expired or already processed");
         }
 
-        // 필요 시 재조회 (확정 결과 반환용)
         var reservation = reservationRepository.findById(command.reservationId());
+
+        eventPublisher.publishEvent(
+                new ReservationConfirmedEvent(
+                        reservation.getId(),
+                        reservation.getSeat().getConcertDate().getConcert().getId()
+                )
+        );
 
         return new ConfirmReservationResult(
                 reservation.getId(),

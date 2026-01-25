@@ -4,14 +4,13 @@ import kr.hhplus.be.server.application.concert.port.in.concertdate.GetConcertDat
 import kr.hhplus.be.server.application.concert.port.in.concertdate.GetConcertDatesUseCase;
 import kr.hhplus.be.server.application.concert.port.in.seat.GetSeatsQuery;
 import kr.hhplus.be.server.application.concert.port.in.seat.GetSeatsUseCase;
+import kr.hhplus.be.server.application.concert.service.GetConcertRankingService;
 import kr.hhplus.be.server.presentation.concert.dto.ConcertDateResponse;
+import kr.hhplus.be.server.presentation.concert.dto.ConcertRankingResponse;
 import kr.hhplus.be.server.presentation.concert.dto.SeatResponse;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.UUID;
@@ -22,6 +21,7 @@ import java.util.UUID;
 public class ConcertController {
     private final GetConcertDatesUseCase getConcertDatesUseCase;
     private final GetSeatsUseCase getSeatsUseCase;
+    private final GetConcertRankingService rankingService;
 
     @GetMapping("/{concertId}/dates")
     public ResponseEntity<List<ConcertDateResponse>> getConcertDates(@PathVariable UUID concertId) {
@@ -36,5 +36,14 @@ public class ConcertController {
         var response = results.stream().map(SeatResponse::from).toList();
 
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/concerts/rankings")
+    public ConcertRankingResponse rankings(
+            @RequestParam(defaultValue = "10") int limit
+    ) {
+        return ConcertRankingResponse.from(
+                rankingService.getTopRankings(limit)
+        );
     }
 }
