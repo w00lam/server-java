@@ -45,9 +45,6 @@ public class ConcertRankingRedisIntegrationTest extends ReservationIntegrationTe
                 "A", "1", "1", "VIP"
         );
 
-        // 토큰 발급
-        issueToken(user);
-
         // 예약
         UUID reservationId = reserveSeat(
                 user.getId(),
