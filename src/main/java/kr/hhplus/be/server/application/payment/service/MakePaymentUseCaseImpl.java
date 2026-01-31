@@ -1,5 +1,6 @@
 package kr.hhplus.be.server.application.payment.service;
 
+import kr.hhplus.be.server.application.concert.service.GetConcertRankingService;
 import kr.hhplus.be.server.application.payment.port.in.MakePaymentCommand;
 import kr.hhplus.be.server.application.payment.port.in.MakePaymentResult;
 import kr.hhplus.be.server.application.payment.port.in.MakePaymentUseCase;
@@ -21,8 +22,11 @@ public class MakePaymentUseCaseImpl implements MakePaymentUseCase {
     @Override
     public MakePaymentResult execute(MakePaymentCommand command) {
         Reservation reservation = reservationRepositoryPort.findById(command.reservationId());
+
         paymentDomainService.validateAmount(command.amount());
+
         Payment payment = paymentDomainService.createPending(reservation, command.amount(), command.method());
+
         Payment saved = paymentRepositoryPort.save(payment);
 
         return new MakePaymentResult(saved.getId(), saved.getStatus().name());

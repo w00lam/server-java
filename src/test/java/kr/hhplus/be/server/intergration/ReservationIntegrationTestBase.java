@@ -6,9 +6,6 @@ import jakarta.persistence.PersistenceContext;
 import kr.hhplus.be.server.application.payment.port.in.MakePaymentCommand;
 import kr.hhplus.be.server.application.payment.port.in.MakePaymentResult;
 import kr.hhplus.be.server.application.payment.port.in.MakePaymentUseCase;
-import kr.hhplus.be.server.application.queue.token.port.in.IssueTokenCommand;
-import kr.hhplus.be.server.application.queue.token.port.in.IssueTokenResult;
-import kr.hhplus.be.server.application.queue.token.port.in.IssueTokenUseCase;
 import kr.hhplus.be.server.application.reservation.port.in.MakeReservationCommand;
 import kr.hhplus.be.server.application.reservation.port.in.MakeReservationResult;
 import kr.hhplus.be.server.application.reservation.port.in.MakeReservationUseCase;
@@ -23,7 +20,7 @@ import kr.hhplus.be.server.infrastructure.persistence.concert.adapter.ConcertRep
 import kr.hhplus.be.server.infrastructure.persistence.concert.adapter.SeatRepositoryImpl;
 import kr.hhplus.be.server.infrastructure.persistence.payment.adapter.PaymentRepositoryImpl;
 import kr.hhplus.be.server.infrastructure.persistence.point.adapter.PointRepositoryImpl;
-import kr.hhplus.be.server.infrastructure.persistence.queue.token.adapter.TokenRepositoryImpl;
+import kr.hhplus.be.server.infrastructure.persistence.tokenqueue.adapter.TokenQueueRepositoryImpl;
 import kr.hhplus.be.server.infrastructure.persistence.reservation.adapter.ReservationRepositoryImpl;
 import kr.hhplus.be.server.infrastructure.persistence.user.adapter.UserRepositoryImpl;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,17 +31,14 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-@ActiveProfiles("test")
 @SpringBootTest
+@ActiveProfiles("test")
 public abstract class ReservationIntegrationTestBase {
     /*
      * ================
      *   USE CASES
      * ================
      */
-    @Autowired
-    protected IssueTokenUseCase issueTokenUseCase;
-
     @Autowired
     protected MakeReservationUseCase makeReservationUseCase;
 
@@ -60,7 +54,7 @@ public abstract class ReservationIntegrationTestBase {
     protected UserRepositoryImpl userRepository;
 
     @Autowired
-    protected TokenRepositoryImpl tokenRepository;
+    protected TokenQueueRepositoryImpl tokenRepository;
 
     @Autowired
     protected ReservationRepositoryImpl reservationRepository;
@@ -160,18 +154,6 @@ public abstract class ReservationIntegrationTestBase {
         return saved;
     }
 
-
-    /*
-     * =============================================
-     *     HELPER: ISSUE TOKEN → RETURN RESULT
-     * =============================================
-     */
-    protected IssueTokenResult issueToken(User user) {
-        IssueTokenCommand cmd = new IssueTokenCommand(user.getId());
-        return issueTokenUseCase.execute(cmd);
-    }
-
-
     /*
      * =============================================
      *     HELPER: MAKE RESERVATION → RETURN RESULT
@@ -181,7 +163,6 @@ public abstract class ReservationIntegrationTestBase {
         MakeReservationCommand cmd = new MakeReservationCommand(userId, concertId, seatId);
         return makeReservationUseCase.execute(cmd);
     }
-
 
     /*
      * =============================================

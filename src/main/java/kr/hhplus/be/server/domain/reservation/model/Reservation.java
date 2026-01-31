@@ -74,4 +74,12 @@ public class Reservation {
                 .deleted(false)
                 .build();
     }
+    public void cancel() {
+        if (this.status == ReservationStatus.CANCELED) {
+            throw new IllegalStateException("Already cancelled");
+        }
+
+        this.status = ReservationStatus.CANCELED;
+        this.deleted = true;
+    }
 }
