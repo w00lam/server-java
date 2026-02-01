@@ -1,8 +1,8 @@
 package kr.hhplus.be.server.unit.application.reservation.service;
 
-import kr.hhplus.be.server.application.concert.service.GetConcertRankingService;
+import kr.hhplus.be.server.application.event.DomainEventPublisher;
+import kr.hhplus.be.server.application.reservation.event.ReservationConfirmedEvent;
 import kr.hhplus.be.server.application.reservation.port.in.ConfirmReservationCommand;
-import kr.hhplus.be.server.application.reservation.port.in.ConfirmReservationResult;
 import kr.hhplus.be.server.application.reservation.port.out.ReservationRepositoryPort;
 import kr.hhplus.be.server.application.reservation.service.ConfirmReservationUseCaseImpl;
 import kr.hhplus.be.server.domain.concert.model.Concert;
@@ -12,6 +12,8 @@ import kr.hhplus.be.server.domain.reservation.model.Reservation;
 import kr.hhplus.be.server.domain.reservation.model.ReservationStatus;
 import kr.hhplus.be.server.unit.BaseUnitTest;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 
@@ -23,13 +25,16 @@ public class ConfirmReservationUseCaseImplTest extends BaseUnitTest {
     @Mock
     ReservationRepositoryPort reservationRepository;
     @Mock
-    GetConcertRankingService getConcertRankingService;
+    DomainEventPublisher eventPublisher;
 
     @InjectMocks
     ConfirmReservationUseCaseImpl useCase;
 
+    @Captor
+    ArgumentCaptor<Object> eventCaptor;
+
     @Test
-    void 예약이_확정되면_랭킹이_증가한다() {
+    void 예약이_확정되면_ReservationConfirmedEvent가_발행된다() {
         // given
         Concert concert = Concert.builder()
                 .id(fixedUUID())
@@ -49,6 +54,7 @@ public class ConfirmReservationUseCaseImplTest extends BaseUnitTest {
                 .status(ReservationStatus.TEMP_HOLD)
                 .tempHoldExpiresAt(fixedNow().plusMinutes(10))
                 .build();
+
         when(reservationRepository.confirmIfNotExpired(fixedUUID2())).thenReturn(true);
         when(reservationRepository.findById(fixedUUID2())).thenReturn(reservation);
 
@@ -56,21 +62,29 @@ public class ConfirmReservationUseCaseImplTest extends BaseUnitTest {
         useCase.execute(new ConfirmReservationCommand(fixedUUID2()));
 
         // then
-        verify(reservationRepository).confirmIfNotExpired(fixedUUID2());
-        verify(getConcertRankingService).increaseReservation(fixedUUID());
+        verify(eventPublisher).publish(eventCaptor.capture());
+
+        Object event = eventCaptor.getValue();
+        assertThat(event).isInstanceOf(ReservationConfirmedEvent.class);
+
+        ReservationConfirmedEvent confirmedEvent =
+                (ReservationConfirmedEvent) event;
+
+        assertThat(confirmedEvent.reservationId()).isEqualTo(fixedUUID2());
+        assertThat(confirmedEvent.concertId()).isEqualTo(fixedUUID());
     }
 
     @Test
-    void 이미_확정된_예약이면_예외가_발생한다() {
+    void 이미_처리된_예약이면_이벤트는_발행되지_않는다() {
         // given
         when(reservationRepository.confirmIfNotExpired(fixedUUID()))
                 .thenReturn(false);
 
         // when & then
-        assertThatThrownBy(() -> useCase.execute(new ConfirmReservationCommand(fixedUUID())))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessage("Reservation expired or already processed");
+        assertThatThrownBy(() ->
+                useCase.execute(new ConfirmReservationCommand(fixedUUID()))
+        ).isInstanceOf(IllegalStateException.class);
 
-        verify(getConcertRankingService, never()).increaseReservation(any());
+        verify(eventPublisher, org.mockito.Mockito.never()).publish(org.mockito.Mockito.any());
     }
 }

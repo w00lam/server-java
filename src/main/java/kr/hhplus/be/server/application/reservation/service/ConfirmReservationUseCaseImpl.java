@@ -1,6 +1,7 @@
 package kr.hhplus.be.server.application.reservation.service;
 
 import kr.hhplus.be.server.application.concert.service.GetConcertRankingService;
+import kr.hhplus.be.server.application.event.DomainEventPublisher;
 import kr.hhplus.be.server.application.reservation.event.ReservationConfirmedEvent;
 import kr.hhplus.be.server.application.reservation.port.in.ConfirmReservationCommand;
 import kr.hhplus.be.server.application.reservation.port.in.ConfirmReservationResult;
@@ -15,7 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class ConfirmReservationUseCaseImpl implements ConfirmReservationUseCase {
     private final ReservationRepositoryPort reservationRepository;
-    private final ApplicationEventPublisher eventPublisher;
+    private final DomainEventPublisher eventPublisher;
 
     @Override
     @Transactional
@@ -28,7 +29,7 @@ public class ConfirmReservationUseCaseImpl implements ConfirmReservationUseCase 
 
         var reservation = reservationRepository.findById(command.reservationId());
 
-        eventPublisher.publishEvent(
+        eventPublisher.publish(
                 new ReservationConfirmedEvent(
                         reservation.getId(),
                         reservation.getSeat().getConcertDate().getConcert().getId()

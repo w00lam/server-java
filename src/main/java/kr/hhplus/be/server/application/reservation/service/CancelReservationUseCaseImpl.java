@@ -1,5 +1,6 @@
 package kr.hhplus.be.server.application.reservation.service;
 
+import kr.hhplus.be.server.application.event.DomainEventPublisher;
 import kr.hhplus.be.server.application.reservation.event.ReservationCanceledEvent;
 import kr.hhplus.be.server.application.reservation.port.in.CancelReservationCommand;
 import kr.hhplus.be.server.application.reservation.port.in.CancelReservationResult;
@@ -17,7 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class CancelReservationUseCaseImpl implements CancelReservationUseCase {
     private final ReservationRepositoryPort reservationRepository;
-    private final ApplicationEventPublisher eventPublisher;
+    private final DomainEventPublisher eventPublisher;
 
     @Override
     @Transactional
@@ -34,7 +35,7 @@ public class CancelReservationUseCaseImpl implements CancelReservationUseCase {
         reservationRepository.save(reservation);
 
         if (wasConfirmed) {
-            eventPublisher.publishEvent(
+            eventPublisher.publish(
                     new ReservationCanceledEvent(
                             reservation.getId(),
                             reservation.getSeat().getConcertDate().getConcert().getId()
