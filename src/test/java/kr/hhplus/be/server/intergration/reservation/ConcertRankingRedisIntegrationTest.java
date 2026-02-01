@@ -54,8 +54,6 @@ public class ConcertRankingRedisIntegrationTest extends ReservationIntegrationTe
 
         // when: 결제 → 예약 확정
         payReservation(reservationId, 5_000, PaymentMethod.CARD);
-
-        // 예약 확정 UseCase 호출
         confirmReservationUseCase.execute(new ConfirmReservationCommand(reservationId));
 
         // then: 콘서트 랭킹에 반영됨

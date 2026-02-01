@@ -1,6 +1,7 @@
 package kr.hhplus.be.server.unit.application.reservation.service;
 
-import kr.hhplus.be.server.application.concert.service.GetConcertRankingService;
+import kr.hhplus.be.server.application.event.DomainEventPublisher;
+import kr.hhplus.be.server.application.reservation.event.ReservationCanceledEvent;
 import kr.hhplus.be.server.application.reservation.port.in.CancelReservationCommand;
 import kr.hhplus.be.server.application.reservation.port.out.ReservationRepositoryPort;
 import kr.hhplus.be.server.application.reservation.service.CancelReservationUseCaseImpl;
@@ -11,40 +12,33 @@ import kr.hhplus.be.server.domain.reservation.model.Reservation;
 import kr.hhplus.be.server.domain.reservation.model.ReservationStatus;
 import kr.hhplus.be.server.unit.BaseUnitTest;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.*;
 
-@ExtendWith(MockitoExtension.class)
 public class CancelReservationUseCaseImplTest extends BaseUnitTest {
     @Mock
     ReservationRepositoryPort reservationRepository;
     @Mock
-    GetConcertRankingService getConcertRankingService;
+    DomainEventPublisher eventPublisher;
 
     @InjectMocks
     CancelReservationUseCaseImpl useCase;
 
+    @Captor
+    ArgumentCaptor<Object> eventCaptor;
+
     @Test
-    void 확정된_예약을_취소하면_상태가_CANCELLED로_변경되고_랭킹이_감소한다() {
+    void 확정된_예약을_취소하면_콘서트_예약_취소_이벤트가_발행된다() {
         // given
-        Concert concert = Concert.builder()
-                .id(fixedUUID())
-                .build();
-
-        ConcertDate concertDate = ConcertDate.builder()
-                .concert(concert)
-                .build();
-
-        Seat seat = Seat.builder()
-                .concertDate(concertDate)
-                .build();
+        Concert concert = Concert.builder().id(fixedUUID()).build();
+        ConcertDate concertDate = ConcertDate.builder().concert(concert).build();
+        Seat seat = Seat.builder().concertDate(concertDate).build();
 
         Reservation reservation = Reservation.builder()
                 .id(fixedUUID2())
@@ -60,13 +54,18 @@ public class CancelReservationUseCaseImplTest extends BaseUnitTest {
         // then
         assertThat(reservation.getStatus()).isEqualTo(ReservationStatus.CANCELED);
 
-        verify(getConcertRankingService).decreaseReservation(fixedUUID());
-        verify(reservationRepository).save(reservation);
+        verify(eventPublisher).publish(eventCaptor.capture());
+        Object event = eventCaptor.getValue();
+
+        assertThat(event).isInstanceOf(ReservationCanceledEvent.class);
+        ReservationCanceledEvent canceledEvent = (ReservationCanceledEvent) event;
+
+        assertThat(canceledEvent.reservationId()).isEqualTo(fixedUUID2());
+        assertThat(canceledEvent.concertId()).isEqualTo(fixedUUID());
     }
 
-
     @Test
-    void 확정되지_않은_예약을_취소하면_랭킹은_감소하지_않는다() {
+    void 확정되지_않은_예약을_취소하면_이벤트는_발행되지_않는다() {
         // given
         Reservation reservation = Reservation.builder()
                 .id(fixedUUID())
@@ -79,9 +78,6 @@ public class CancelReservationUseCaseImplTest extends BaseUnitTest {
         useCase.execute(new CancelReservationCommand(fixedUUID()));
 
         // then
-        assertThat(reservation.getStatus()).isEqualTo(ReservationStatus.CANCELED);
-
-        verify(getConcertRankingService, never()).decreaseReservation(any());
-        verify(reservationRepository).save(reservation);
+        verify(eventPublisher, never()).publish(any());
     }
 }
