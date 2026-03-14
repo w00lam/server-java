@@ -1,10 +1,12 @@
 package kr.hhplus.be.server.application.payment.service;
 
 import kr.hhplus.be.server.application.concert.service.GetConcertRankingService;
+import kr.hhplus.be.server.application.event.DomainEventPublisher;
 import kr.hhplus.be.server.application.payment.port.in.MakePaymentCommand;
 import kr.hhplus.be.server.application.payment.port.in.MakePaymentResult;
 import kr.hhplus.be.server.application.payment.port.in.MakePaymentUseCase;
 import kr.hhplus.be.server.application.payment.port.out.PaymentRepositoryPort;
+import kr.hhplus.be.server.application.reservation.event.ReservationConfirmedEvent;
 import kr.hhplus.be.server.application.reservation.port.out.ReservationRepositoryPort;
 import kr.hhplus.be.server.domain.payment.model.Payment;
 import kr.hhplus.be.server.domain.payment.service.PaymentDomainService;
@@ -18,6 +20,7 @@ public class MakePaymentUseCaseImpl implements MakePaymentUseCase {
     private final ReservationRepositoryPort reservationRepositoryPort;
     private final PaymentRepositoryPort paymentRepositoryPort;
     private final PaymentDomainService paymentDomainService;
+    private final DomainEventPublisher eventPublisher;
 
     @Override
     public MakePaymentResult execute(MakePaymentCommand command) {
@@ -28,6 +31,11 @@ public class MakePaymentUseCaseImpl implements MakePaymentUseCase {
         Payment payment = paymentDomainService.createPending(reservation, command.amount(), command.method());
 
         Payment saved = paymentRepositoryPort.save(payment);
+
+        eventPublisher.publish(new ReservationConfirmedEvent(
+                reservation.getId(),
+                reservation.getUser().getId()
+        ));
 
         return new MakePaymentResult(saved.getId(), saved.getStatus().name());
     }

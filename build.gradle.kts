@@ -36,7 +36,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-data-redis")
     implementation ("org.springframework.boot:spring-boot-starter-cache")
-
+    implementation ("org.springframework.kafka:spring-kafka")
 
     // DB
     runtimeOnly("com.mysql:mysql-connector-j")
@@ -51,6 +51,8 @@ dependencies {
     testImplementation("org.springframework.boot:spring-boot-starter-data-jpa")
     testImplementation("org.testcontainers:junit-jupiter")
     testImplementation("org.testcontainers:mysql")
+    testImplementation("org.springframework.kafka:spring-kafka-test")
+    testImplementation("org.awaitility:awaitility:4.2.0")
 
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
