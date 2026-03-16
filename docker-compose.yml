@@ -1,5 +1,21 @@
 version: '3'
 services:
+  app:
+    build: .
+    container_name: hhplus-app
+    ports:
+      - "8080:8080"
+    depends_on:
+      - mysql
+      - redis
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: '2G'
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/hhplus
+      - SPRING_DATA_REDIS_HOST=redis
   mysql:
     image: mysql:8.0
     ports:
@@ -11,6 +27,13 @@ services:
       - MYSQL_DATABASE=hhplus
     volumes:
       - ./data/mysql/:/var/lib/mysql
+
+  redis:
+    image: redis:7.2
+    container_name: hhplus-redis
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
 
   zookeeper:
     image: confluentinc/cp-zookeeper:7.6.0
