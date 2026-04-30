@@ -8,4 +8,5 @@ public interface TokenQueueRepositoryPort {
     Integer getUserRank(String userId);
     Integer getQueueLength();
     String getNextUser();
+    String popNextUser();
 }

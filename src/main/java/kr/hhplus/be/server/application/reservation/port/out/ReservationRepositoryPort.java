@@ -15,5 +15,7 @@ public interface ReservationRepositoryPort {
 
     boolean existsBySeatAndStatus(Seat seat, ReservationStatus status);
 
+    boolean existsActiveReservationBySeat(Seat seat);
+
     long countBySeatAndStatus(Seat seat, ReservationStatus status);
 }

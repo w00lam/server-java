@@ -8,7 +8,6 @@ import kr.hhplus.be.server.application.user.port.out.UserRepositoryPort;
 import kr.hhplus.be.server.domain.concert.model.seat.Seat;
 import kr.hhplus.be.server.domain.reservation.model.Reservation;
 import kr.hhplus.be.server.domain.reservation.model.ReservationExpirationPolicy;
-import kr.hhplus.be.server.domain.reservation.model.ReservationStatus;
 import kr.hhplus.be.server.domain.user.model.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -32,8 +31,8 @@ public class ReservationTxService {
         Seat seat = seatRepositoryPort.findById(command.seatId());
 
 
-        if (reservationRepositoryPort.existsBySeatAndStatus(seat, ReservationStatus.EXPIRED)
-                || reservationRepositoryPort.existsBySeatAndStatus(seat, ReservationStatus.CONFIRMED)) {
+        // Active holds are the only records that should block a new temporary reservation.
+        if (reservationRepositoryPort.existsActiveReservationBySeat(seat)) {
             throw new RuntimeException("Seat is already being reserved");
         }
 

@@ -21,10 +21,8 @@ public class TokenQueueUseCaseImpl implements TokenQueueUseCase {
 
     @Override
     public void dequeueUser() {
-        String nextUser = tokenQueueRepository.getNextUser();
-        if (nextUser != null) {
-            tokenQueueRepository.removeUser(nextUser);
-        }
+        // Redis pops the first waiting user atomically, preventing duplicate admission across app instances.
+        tokenQueueRepository.popNextUser();
     }
 
     @Override

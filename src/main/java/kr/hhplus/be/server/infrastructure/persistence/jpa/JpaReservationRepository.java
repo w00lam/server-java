@@ -31,6 +31,17 @@ public interface JpaReservationRepository extends JpaRepository<Reservation, UUI
 
     boolean existsBySeatAndStatus(Seat seat, ReservationStatus status);
 
+    // Only non-expired holds and confirmed reservations are active blockers for a seat.
+    @Query("""
+            SELECT COUNT(r) > 0 FROM Reservation r
+            WHERE r.seat = :seat
+            AND (
+                r.status = 'CONFIRMED'
+                OR (r.status = 'TEMP_HOLD' AND r.tempHoldExpiresAt > CURRENT_TIMESTAMP)
+            )
+            """)
+    boolean existsActiveReservationBySeat(@Param("seat") Seat seat);
+
     long countBySeatAndStatus(Seat seat, ReservationStatus status);
 
     @Modifying

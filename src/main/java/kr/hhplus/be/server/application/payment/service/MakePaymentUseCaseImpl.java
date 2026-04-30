@@ -32,9 +32,10 @@ public class MakePaymentUseCaseImpl implements MakePaymentUseCase {
 
         Payment saved = paymentRepositoryPort.save(payment);
 
+        // Downstream ranking and data-platform consumers aggregate confirmations by concert.
         eventPublisher.publish(new ReservationConfirmedEvent(
                 reservation.getId(),
-                reservation.getUser().getId()
+                reservation.getSeat().getConcertDate().getConcert().getId()
         ));
 
         return new MakePaymentResult(saved.getId(), saved.getStatus().name());

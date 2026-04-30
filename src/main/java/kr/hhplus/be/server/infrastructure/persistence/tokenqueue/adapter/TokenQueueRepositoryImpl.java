@@ -4,6 +4,7 @@ import kr.hhplus.be.server.application.tokenqueue.port.out.TokenQueueRepositoryP
 import kr.hhplus.be.server.domain.tokenqueue.model.TokenQueue;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Repository;
 
 import java.util.Set;
@@ -40,6 +41,13 @@ public class TokenQueueRepositoryImpl implements TokenQueueRepositoryPort {
     public String getNextUser() {
         Set<String> users = redisTemplate.opsForZSet().range(QUEUE_KEY, 0, 0);
         return (users != null && !users.isEmpty()) ? users.iterator().next() : null;
+    }
+
+    @Override
+    public String popNextUser() {
+        // ZPOPMIN performs read-and-remove in a single Redis command.
+        ZSetOperations.TypedTuple<String> user = redisTemplate.opsForZSet().popMin(QUEUE_KEY);
+        return user != null ? user.getValue() : null;
     }
 
     // =========================

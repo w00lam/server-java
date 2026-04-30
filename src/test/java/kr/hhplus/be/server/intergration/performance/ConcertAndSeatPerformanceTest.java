@@ -10,6 +10,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
+import kr.hhplus.be.server.TestcontainersConfiguration;
+import org.springframework.test.context.ContextConfiguration;
 
 import java.util.UUID;
 
@@ -17,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
 @ActiveProfiles("test")
+@ContextConfiguration(initializers = TestcontainersConfiguration.Initializer.class)
 public class ConcertAndSeatPerformanceTest {
 
     @Autowired

@@ -61,3 +61,22 @@ tasks.withType<Test> {
     useJUnitPlatform()
     systemProperty("user.timezone", "UTC")
 }
+
+tasks.test {
+    // Keep the default test task runnable without Docker or local MySQL/Redis/Kafka.
+    exclude("**/intergration/**")
+    exclude("**/ServerApplicationTests.class")
+}
+
+tasks.register<Test>("integrationTest") {
+    description = "Runs Spring context and infrastructure tests that require Docker/Testcontainers."
+    group = "verification"
+
+    useJUnitPlatform()
+    systemProperty("user.timezone", "UTC")
+
+    // The project currently uses the misspelled package name 'intergration', so keep the pattern aligned with it.
+    include("**/intergration/**")
+    include("**/ServerApplicationTests.class")
+    shouldRunAfter(tasks.test)
+}

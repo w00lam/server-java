@@ -37,6 +37,11 @@ public class ReservationRepositoryImpl implements ReservationRepositoryPort {
     }
 
     @Override
+    public boolean existsActiveReservationBySeat(Seat seat) {
+        return jpa.existsActiveReservationBySeat(seat);
+    }
+
+    @Override
     public long countBySeatAndStatus(Seat seat, ReservationStatus status) {
         return jpa.countBySeatAndStatus(seat, status);
     }

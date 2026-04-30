@@ -20,10 +20,6 @@ import java.util.UUID;
 @AllArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
 @Table(name = "RESERVATIONS",
-        uniqueConstraints = @UniqueConstraint(
-                name = "uk_seat_status",
-                columnNames = {"seat_Id", "status"}
-        ),
         indexes = {
                 @Index(name = "idx_status_tempHoldExpiresAt", columnList = "status,tempHoldExpiresAt")
         }

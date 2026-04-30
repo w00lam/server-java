@@ -19,6 +19,7 @@ public class MakeReservationUseCaseImpl implements MakeReservationUseCase {
 
     @Override
     public MakeReservationResult execute(MakeReservationCommand command) {
+        // Serialize attempts for the same concert seat before entering the DB transaction.
         String lockKey = SeatLockKey.of(command.concertId(), command.seatId());
         String lockValue = lockManager.lock(lockKey, Duration.ofSeconds(5));
 
@@ -31,6 +32,7 @@ public class MakeReservationUseCaseImpl implements MakeReservationUseCase {
         try {
             return reservationTxService.reserve(command);
         } finally {
+            // Unlock with the owner token so another request's lock is not released accidentally.
             lockManager.unlock(lockKey, lockValue);
         }
     }

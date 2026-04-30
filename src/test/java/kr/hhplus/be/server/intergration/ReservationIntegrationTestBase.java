@@ -9,6 +9,7 @@ import kr.hhplus.be.server.application.payment.port.in.MakePaymentUseCase;
 import kr.hhplus.be.server.application.reservation.port.in.MakeReservationCommand;
 import kr.hhplus.be.server.application.reservation.port.in.MakeReservationResult;
 import kr.hhplus.be.server.application.reservation.port.in.MakeReservationUseCase;
+import kr.hhplus.be.server.TestcontainersConfiguration;
 import kr.hhplus.be.server.domain.concert.model.Concert;
 import kr.hhplus.be.server.domain.concert.model.ConcertDate;
 import kr.hhplus.be.server.domain.concert.model.seat.Seat;
@@ -26,6 +27,7 @@ import kr.hhplus.be.server.infrastructure.persistence.user.adapter.UserRepositor
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.ContextConfiguration;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -33,6 +35,7 @@ import java.util.UUID;
 
 @SpringBootTest
 @ActiveProfiles("test")
+@ContextConfiguration(initializers = TestcontainersConfiguration.Initializer.class)
 public abstract class ReservationIntegrationTestBase {
     /*
      * ================
