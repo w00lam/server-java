@@ -14,37 +14,40 @@ import org.springframework.mock.http.MockHttpInputMessage;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 public class GlobalExceptionHandlerTest extends BaseUnitTest {
     private final GlobalExceptionHandler handler = new GlobalExceptionHandler();
 
     @Test
-    @DisplayName("handleClientInput: returns bad request problem with stable code")
+    @DisplayName("handleClientInput: returns bad request error response with stable code")
     void handleClientInput() {
-        var problem = handler.handleClientInput(new ClientInputException(ErrorCode.REQUEST_BODY_REQUIRED, "요청 본문은 필수입니다."));
+        var response = handler.handleClientInput(new ClientInputException(ErrorCode.REQUEST_BODY_REQUIRED, "요청 본문은 필수입니다."));
 
-        assertEquals(HttpStatus.BAD_REQUEST.value(), problem.getStatus());
-        assertEquals("요청 본문은 필수입니다.", problem.getDetail());
-        assertEquals(ErrorCode.REQUEST_BODY_REQUIRED.name(), problem.getProperties().get("code"));
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertEquals(400, response.getBody().status());
+        assertEquals("요청 본문은 필수입니다.", response.getBody().message());
+        assertEquals(ErrorCode.REQUEST_BODY_REQUIRED.name(), response.getBody().code());
+        assertNull(response.getBody().data());
     }
 
     @Test
-    @DisplayName("handleResourceNotFound: returns not found problem with stable code")
+    @DisplayName("handleResourceNotFound: returns not found error response with stable code")
     void handleResourceNotFound() {
-        var problem = handler.handleResourceNotFound(new ResourceNotFoundException(ErrorCode.USER_NOT_FOUND, "사용자를 찾을 수 없습니다."));
+        var response = handler.handleResourceNotFound(new ResourceNotFoundException(ErrorCode.USER_NOT_FOUND, "사용자를 찾을 수 없습니다."));
 
-        assertEquals(HttpStatus.NOT_FOUND.value(), problem.getStatus());
-        assertEquals(ErrorCode.USER_NOT_FOUND.name(), problem.getProperties().get("code"));
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        assertEquals(ErrorCode.USER_NOT_FOUND.name(), response.getBody().code());
     }
 
     @Test
-    @DisplayName("handleBusinessRuleViolation: returns conflict problem with stable code")
+    @DisplayName("handleBusinessRuleViolation: returns conflict error response with stable code")
     void handleBusinessRuleViolation() {
-        var problem = handler.handleBusinessRuleViolation(new BusinessRuleViolationException(ErrorCode.RESERVATION_ALREADY_CANCELLED, "이미 취소된 예약입니다."));
+        var response = handler.handleBusinessRuleViolation(new BusinessRuleViolationException(ErrorCode.RESERVATION_ALREADY_CANCELLED, "이미 취소된 예약입니다."));
 
-        assertEquals(HttpStatus.CONFLICT.value(), problem.getStatus());
-        assertEquals("이미 취소된 예약입니다.", problem.getDetail());
-        assertEquals(ErrorCode.RESERVATION_ALREADY_CANCELLED.name(), problem.getProperties().get("code"));
+        assertEquals(HttpStatus.CONFLICT, response.getStatusCode());
+        assertEquals("이미 취소된 예약입니다.", response.getBody().message());
+        assertEquals(ErrorCode.RESERVATION_ALREADY_CANCELLED.name(), response.getBody().code());
     }
 
     @Test
@@ -52,11 +55,11 @@ public class GlobalExceptionHandlerTest extends BaseUnitTest {
     void handleUnreadableMessage() {
         var exception = new HttpMessageNotReadableException("invalid json", new MockHttpInputMessage(new byte[0]));
 
-        var problem = handler.handleUnreadableMessage(exception);
+        var response = handler.handleUnreadableMessage(exception);
 
-        assertEquals(HttpStatus.BAD_REQUEST.value(), problem.getStatus());
-        assertEquals("요청 본문을 읽을 수 없습니다.", problem.getDetail());
-        assertEquals(ErrorCode.INVALID_REQUEST_BODY.name(), problem.getProperties().get("code"));
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertEquals("요청 본문을 읽을 수 없습니다.", response.getBody().message());
+        assertEquals(ErrorCode.INVALID_REQUEST_BODY.name(), response.getBody().code());
     }
 
     @Test
@@ -64,20 +67,20 @@ public class GlobalExceptionHandlerTest extends BaseUnitTest {
     void handleTypeMismatch() {
         var exception = new MethodArgumentTypeMismatchException("abc", Integer.class, "amount", null, null);
 
-        var problem = handler.handleTypeMismatch(exception);
+        var response = handler.handleTypeMismatch(exception);
 
-        assertEquals(HttpStatus.BAD_REQUEST.value(), problem.getStatus());
-        assertEquals("요청 파라미터 형식이 올바르지 않습니다.", problem.getDetail());
-        assertEquals(ErrorCode.INVALID_REQUEST_PARAMETER.name(), problem.getProperties().get("code"));
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertEquals("요청 파라미터 형식이 올바르지 않습니다.", response.getBody().message());
+        assertEquals(ErrorCode.INVALID_REQUEST_PARAMETER.name(), response.getBody().code());
     }
 
     @Test
     @DisplayName("handleUnexpected: returns internal server error code")
     void handleUnexpected() {
-        var problem = handler.handleUnexpected(new RuntimeException("secret"));
+        var response = handler.handleUnexpected(new RuntimeException("secret"));
 
-        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR.value(), problem.getStatus());
-        assertEquals("서버 내부 오류가 발생했습니다.", problem.getDetail());
-        assertEquals(ErrorCode.INTERNAL_SERVER_ERROR.name(), problem.getProperties().get("code"));
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
+        assertEquals("서버 내부 오류가 발생했습니다.", response.getBody().message());
+        assertEquals(ErrorCode.INTERNAL_SERVER_ERROR.name(), response.getBody().code());
     }
 }
