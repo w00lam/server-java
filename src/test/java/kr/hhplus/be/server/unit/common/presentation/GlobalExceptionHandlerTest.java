@@ -9,6 +9,9 @@ import kr.hhplus.be.server.unit.BaseUnitTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.mock.http.MockHttpInputMessage;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -42,5 +45,39 @@ public class GlobalExceptionHandlerTest extends BaseUnitTest {
         assertEquals(HttpStatus.CONFLICT.value(), problem.getStatus());
         assertEquals("이미 취소된 예약입니다.", problem.getDetail());
         assertEquals(ErrorCode.RESERVATION_ALREADY_CANCELLED.name(), problem.getProperties().get("code"));
+    }
+
+    @Test
+    @DisplayName("handleUnreadableMessage: returns invalid request body code")
+    void handleUnreadableMessage() {
+        var exception = new HttpMessageNotReadableException("invalid json", new MockHttpInputMessage(new byte[0]));
+
+        var problem = handler.handleUnreadableMessage(exception);
+
+        assertEquals(HttpStatus.BAD_REQUEST.value(), problem.getStatus());
+        assertEquals("요청 본문을 읽을 수 없습니다.", problem.getDetail());
+        assertEquals(ErrorCode.INVALID_REQUEST_BODY.name(), problem.getProperties().get("code"));
+    }
+
+    @Test
+    @DisplayName("handleTypeMismatch: returns invalid request parameter code")
+    void handleTypeMismatch() {
+        var exception = new MethodArgumentTypeMismatchException("abc", Integer.class, "amount", null, null);
+
+        var problem = handler.handleTypeMismatch(exception);
+
+        assertEquals(HttpStatus.BAD_REQUEST.value(), problem.getStatus());
+        assertEquals("요청 파라미터 형식이 올바르지 않습니다.", problem.getDetail());
+        assertEquals(ErrorCode.INVALID_REQUEST_PARAMETER.name(), problem.getProperties().get("code"));
+    }
+
+    @Test
+    @DisplayName("handleUnexpected: returns internal server error code")
+    void handleUnexpected() {
+        var problem = handler.handleUnexpected(new RuntimeException("secret"));
+
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR.value(), problem.getStatus());
+        assertEquals("서버 내부 오류가 발생했습니다.", problem.getDetail());
+        assertEquals(ErrorCode.INTERNAL_SERVER_ERROR.name(), problem.getProperties().get("code"));
     }
 }
