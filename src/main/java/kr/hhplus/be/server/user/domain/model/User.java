@@ -1,6 +1,8 @@
 package kr.hhplus.be.server.user.domain.model;
 
 import jakarta.persistence.*;
+import kr.hhplus.be.server.common.exception.BusinessRuleViolationException;
+import kr.hhplus.be.server.common.exception.ClientInputException;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
@@ -59,12 +61,12 @@ public class User {
 
     public void deductPoints(int amount) {
         validateNonNegativeAmount(amount);
-        if (this.points < amount) throw new IllegalStateException("Insufficient points");
+        if (this.points < amount) throw new BusinessRuleViolationException("Insufficient points");
         this.points -= amount;
     }
 
     private void validateNonNegativeAmount(int amount) {
         // Point balance adjustments can be zero, but negative changes must use explicit charge/deduct flows.
-        if (amount < 0) throw new IllegalArgumentException("Amount must be non-negative");
+        if (amount < 0) throw new ClientInputException("Amount must be non-negative");
     }
 }

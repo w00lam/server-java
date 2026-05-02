@@ -1,5 +1,6 @@
 package kr.hhplus.be.server.user.infrastructure.persistence;
 
+import kr.hhplus.be.server.common.exception.ResourceNotFoundException;
 import kr.hhplus.be.server.user.application.port.out.UserRepositoryPort;
 import kr.hhplus.be.server.user.domain.model.User;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +20,6 @@ public class UserRepositoryImpl implements UserRepositoryPort {
 
     @Override
     public User findById(UUID userId) {
-        return jpa.findById(userId).orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
+        return jpa.findById(userId).orElseThrow(() -> new ResourceNotFoundException("User", userId));
     }
 }

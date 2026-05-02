@@ -1,5 +1,6 @@
 package kr.hhplus.be.server.point.domain.service;
 
+import kr.hhplus.be.server.common.exception.ClientInputException;
 import kr.hhplus.be.server.point.domain.model.Point;
 import kr.hhplus.be.server.user.domain.model.User;
 import org.springframework.stereotype.Component;
@@ -9,7 +10,7 @@ import java.util.List;
 @Component
 public class PointDomainService {
     public Point createCharge(User user, int amount) {
-        if (amount <= 0) throw new IllegalArgumentException("Amount must be positive");
+        if (amount <= 0) throw new ClientInputException("Amount must be positive");
         return Point.createCharge(user, amount);
     }
 

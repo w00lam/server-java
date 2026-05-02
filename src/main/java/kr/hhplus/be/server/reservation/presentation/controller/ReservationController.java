@@ -1,5 +1,6 @@
 package kr.hhplus.be.server.reservation.presentation.controller;
 
+import kr.hhplus.be.server.common.exception.ClientInputException;
 import kr.hhplus.be.server.reservation.application.port.in.ConfirmReservationCommand;
 import kr.hhplus.be.server.reservation.application.port.in.ConfirmReservationUseCase;
 import kr.hhplus.be.server.reservation.application.port.in.MakeReservationCommand;
@@ -39,9 +40,9 @@ public class ReservationController {
 
     private void validateMakeReservationRequest(MakeReservationRequest request) {
         // Keep HTTP boundary validation explicit before delegating to the use case.
-        if (request == null) throw new IllegalArgumentException("Request is required");
-        if (request.userId() == null) throw new IllegalArgumentException("UserId is required");
-        if (request.concertId() == null) throw new IllegalArgumentException("ConcertId is required");
-        if (request.seatId() == null) throw new IllegalArgumentException("SeatId is required");
+        if (request == null) throw new ClientInputException("Request is required");
+        if (request.userId() == null) throw new ClientInputException("UserId is required");
+        if (request.concertId() == null) throw new ClientInputException("ConcertId is required");
+        if (request.seatId() == null) throw new ClientInputException("SeatId is required");
     }
 }

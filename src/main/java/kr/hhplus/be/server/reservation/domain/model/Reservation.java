@@ -2,6 +2,7 @@ package kr.hhplus.be.server.reservation.domain.model;
 
 import jakarta.persistence.*;
 import kr.hhplus.be.server.concert.domain.model.seat.Seat;
+import kr.hhplus.be.server.common.exception.BusinessRuleViolationException;
 import kr.hhplus.be.server.user.domain.model.User;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
@@ -72,7 +73,7 @@ public class Reservation {
     }
     public void cancel() {
         if (this.status == ReservationStatus.CANCELED) {
-            throw new IllegalStateException("Already cancelled");
+            throw new BusinessRuleViolationException("Already cancelled");
         }
 
         this.status = ReservationStatus.CANCELED;

@@ -1,5 +1,6 @@
 package kr.hhplus.be.server.point.presentation.controller;
 
+import kr.hhplus.be.server.common.exception.ClientInputException;
 import kr.hhplus.be.server.point.application.port.in.ChargePointCommand;
 import kr.hhplus.be.server.point.application.port.in.ChargePointUseCase;
 import kr.hhplus.be.server.point.application.port.in.GetPointQuery;
@@ -39,8 +40,8 @@ public class PointController {
 
     private void validateChargeRequest(ChargePointRequest request) {
         // Keep transport validation here so application use cases receive a complete command.
-        if (request == null) throw new IllegalArgumentException("Request is required");
-        if (request.user() == null) throw new IllegalArgumentException("UserId is required");
-        if (request.amount() <= 0) throw new IllegalArgumentException("Amount must be positive");
+        if (request == null) throw new ClientInputException("Request is required");
+        if (request.user() == null) throw new ClientInputException("UserId is required");
+        if (request.amount() <= 0) throw new ClientInputException("Amount must be positive");
     }
 }

@@ -1,6 +1,7 @@
 package kr.hhplus.be.server.reservation.application.service;
 
 import kr.hhplus.be.server.application.event.DomainEventPublisher;
+import kr.hhplus.be.server.common.exception.BusinessRuleViolationException;
 import kr.hhplus.be.server.reservation.application.event.ReservationCanceledEvent;
 import kr.hhplus.be.server.reservation.application.port.in.CancelReservationCommand;
 import kr.hhplus.be.server.reservation.application.port.in.CancelReservationResult;
@@ -9,7 +10,6 @@ import kr.hhplus.be.server.reservation.application.port.out.ReservationRepositor
 import kr.hhplus.be.server.reservation.domain.model.Reservation;
 import kr.hhplus.be.server.reservation.domain.model.ReservationStatus;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,7 +26,7 @@ public class CancelReservationUseCaseImpl implements CancelReservationUseCase {
         Reservation reservation = reservationRepository.findById(command.reservationId());
 
         if (reservation.getStatus() == ReservationStatus.CANCELED) {
-            throw new IllegalStateException("Reservation already cancelled");
+            throw new BusinessRuleViolationException("Reservation already cancelled");
         }
 
         boolean wasConfirmed = reservation.getStatus() == ReservationStatus.CONFIRMED;

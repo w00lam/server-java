@@ -1,5 +1,6 @@
 package kr.hhplus.be.server.reservation.infrastructure.persistence;
 
+import kr.hhplus.be.server.common.exception.ResourceNotFoundException;
 import kr.hhplus.be.server.reservation.application.port.out.ReservationRepositoryPort;
 import kr.hhplus.be.server.concert.domain.model.seat.Seat;
 import kr.hhplus.be.server.reservation.domain.model.ReservationStatus;
@@ -17,7 +18,7 @@ public class ReservationRepositoryImpl implements ReservationRepositoryPort {
     @Override
     public Reservation findById(UUID reservationId) {
         return jpa.findById(reservationId)
-                .orElseThrow(() -> new IllegalArgumentException("Reservation not found: " + reservationId));
+                .orElseThrow(() -> new ResourceNotFoundException("Reservation", reservationId));
     }
 
     @Override

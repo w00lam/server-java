@@ -2,6 +2,7 @@ package kr.hhplus.be.server.concert.infrastructure.persistence;
 
 import kr.hhplus.be.server.concert.application.port.out.SeatRepositoryPort;
 import kr.hhplus.be.server.concert.domain.model.seat.Seat;
+import kr.hhplus.be.server.common.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
@@ -21,7 +22,7 @@ public class SeatRepositoryImpl implements SeatRepositoryPort {
 
     @Override
     public Seat findById(UUID seatId) {
-        return jpa.findById(seatId).orElseThrow(() -> new IllegalArgumentException("Seat not found: " + seatId));
+        return jpa.findById(seatId).orElseThrow(() -> new ResourceNotFoundException("Seat", seatId));
     }
 
     @Override

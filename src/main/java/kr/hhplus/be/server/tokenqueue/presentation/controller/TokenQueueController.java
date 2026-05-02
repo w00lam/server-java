@@ -1,5 +1,6 @@
 package kr.hhplus.be.server.tokenqueue.presentation.controller;
 
+import kr.hhplus.be.server.common.exception.ClientInputException;
 import kr.hhplus.be.server.tokenqueue.application.port.in.TokenQueueUseCase;
 import kr.hhplus.be.server.tokenqueue.presentation.dto.TokenQueueRequest;
 import lombok.RequiredArgsConstructor;
@@ -42,7 +43,7 @@ public class TokenQueueController {
 
     private void validateTokenQueueRequest(TokenQueueRequest request) {
         // Token queue commands require an explicit user id at the HTTP boundary.
-        if (request == null) throw new IllegalArgumentException("Request is required");
-        if (request.userId() == null || request.userId().isBlank()) throw new IllegalArgumentException("UserId is required");
+        if (request == null) throw new ClientInputException("Request is required");
+        if (request.userId() == null || request.userId().isBlank()) throw new ClientInputException("UserId is required");
     }
 }
