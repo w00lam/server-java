@@ -175,6 +175,13 @@ Spring MVC 레벨 예외도 글로벌 핸들러에서 공통 에러 응답으로
 
 로컬 실행에는 MySQL, Redis, Kafka 등 외부 인프라 설정이 필요할 수 있습니다.
 
+## API Docs
+
+로컬 실행 후 Swagger UI와 OpenAPI JSON을 확인할 수 있습니다.
+
+- Swagger UI: `http://localhost:8080/swagger-ui.html`
+- OpenAPI JSON: `http://localhost:8080/v3/api-docs`
+
 ## Documentation
 
 - [API Response Policy](docs/api-response-policy.md)
