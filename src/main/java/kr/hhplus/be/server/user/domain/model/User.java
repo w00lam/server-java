@@ -53,13 +53,18 @@ public class User {
     private boolean deleted = false;
 
     public void addPoints(int amount) {
-        if (amount < 0) throw new IllegalArgumentException("Amount must be positive");
+        validateNonNegativeAmount(amount);
         this.points += amount;
     }
 
     public void deductPoints(int amount) {
-        if (amount < 0) throw new IllegalArgumentException("Amount must be positive");
+        validateNonNegativeAmount(amount);
         if (this.points < amount) throw new IllegalStateException("Insufficient points");
         this.points -= amount;
+    }
+
+    private void validateNonNegativeAmount(int amount) {
+        // Point balance adjustments can be zero, but negative changes must use explicit charge/deduct flows.
+        if (amount < 0) throw new IllegalArgumentException("Amount must be non-negative");
     }
 }

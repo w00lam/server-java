@@ -13,9 +13,9 @@ public class PointDomainService {
         return Point.createCharge(user, amount);
     }
 
-    public int calculateBalance(List<Point> points){
+    public int calculateBalance(List<Point> points) {
         return points.stream()
-                .filter(tx->!tx.isDeleted())
+                .filter(tx -> !tx.isDeleted())
                 .mapToInt(Point::getAmount)
                 .sum();
     }

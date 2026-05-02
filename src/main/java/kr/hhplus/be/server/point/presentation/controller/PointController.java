@@ -4,7 +4,6 @@ import kr.hhplus.be.server.point.application.port.in.ChargePointCommand;
 import kr.hhplus.be.server.point.application.port.in.ChargePointUseCase;
 import kr.hhplus.be.server.point.application.port.in.GetPointQuery;
 import kr.hhplus.be.server.point.application.port.in.GetPointUseCase;
-import kr.hhplus.be.server.point.domain.service.PointDomainService;
 import kr.hhplus.be.server.point.presentation.dto.ChargePointRequest;
 import kr.hhplus.be.server.point.presentation.dto.ChargePointResponse;
 import kr.hhplus.be.server.point.presentation.dto.GetPointResponse;
@@ -20,7 +19,6 @@ import java.util.UUID;
 public class PointController {
     private final ChargePointUseCase chargePointUseCase;
     private final GetPointUseCase getPointUseCase;
-    private final PointDomainService pointDomainService;
 
     @PostMapping("/charge")
     public ResponseEntity<ChargePointResponse> chargePoint(@RequestBody ChargePointRequest request) {
@@ -40,7 +38,9 @@ public class PointController {
     }
 
     private void validateChargeRequest(ChargePointRequest request) {
-        if (request.amount() <= 0) throw new IllegalArgumentException("Amount must be positive");
+        // Keep transport validation here so application use cases receive a complete command.
+        if (request == null) throw new IllegalArgumentException("Request is required");
         if (request.user() == null) throw new IllegalArgumentException("UserId is required");
+        if (request.amount() <= 0) throw new IllegalArgumentException("Amount must be positive");
     }
 }
