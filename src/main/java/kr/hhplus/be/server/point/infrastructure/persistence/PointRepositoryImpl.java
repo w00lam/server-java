@@ -2,7 +2,6 @@ package kr.hhplus.be.server.point.infrastructure.persistence;
 
 import kr.hhplus.be.server.point.application.port.out.PointRepositoryPort;
 import kr.hhplus.be.server.point.domain.model.Point;
-import kr.hhplus.be.server.point.infrastructure.persistence.JpaPointRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 

@@ -2,7 +2,6 @@ package kr.hhplus.be.server.concert.infrastructure.persistence;
 
 import kr.hhplus.be.server.concert.application.port.out.ConcertDateRepositoryPort;
 import kr.hhplus.be.server.concert.domain.model.ConcertDate;
-import kr.hhplus.be.server.concert.infrastructure.persistence.JpaConcertDateRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 

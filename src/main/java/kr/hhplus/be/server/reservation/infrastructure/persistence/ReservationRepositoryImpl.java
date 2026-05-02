@@ -3,7 +3,6 @@ package kr.hhplus.be.server.reservation.infrastructure.persistence;
 import kr.hhplus.be.server.reservation.application.port.out.ReservationRepositoryPort;
 import kr.hhplus.be.server.concert.domain.model.seat.Seat;
 import kr.hhplus.be.server.reservation.domain.model.ReservationStatus;
-import kr.hhplus.be.server.reservation.infrastructure.persistence.JpaReservationRepository;
 import kr.hhplus.be.server.reservation.domain.model.Reservation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
