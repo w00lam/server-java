@@ -2,6 +2,7 @@ package kr.hhplus.be.server.tokenqueue.presentation.controller;
 
 import kr.hhplus.be.server.common.exception.ClientInputException;
 import kr.hhplus.be.server.common.exception.ErrorCode;
+import kr.hhplus.be.server.common.presentation.ApiResponse;
 import kr.hhplus.be.server.tokenqueue.application.port.in.TokenQueueUseCase;
 import kr.hhplus.be.server.tokenqueue.presentation.dto.TokenQueueRequest;
 import lombok.RequiredArgsConstructor;
@@ -15,31 +16,31 @@ public class TokenQueueController {
     private final TokenQueueUseCase tokenQueueUseCase;
 
     @PostMapping("/enqueue")
-    public ResponseEntity<Void> enqueue(@RequestBody TokenQueueRequest request) {
+    public ResponseEntity<ApiResponse<Void>> enqueue(@RequestBody TokenQueueRequest request) {
         validateTokenQueueRequest(request);
         tokenQueueUseCase.enqueueUser(request.userId());
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(ApiResponse.ok());
     }
 
     @PostMapping("/dequeue")
-    public ResponseEntity<Void> dequeue() {
+    public ResponseEntity<ApiResponse<Void>> dequeue() {
         tokenQueueUseCase.dequeueUser();
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(ApiResponse.ok());
     }
 
     @GetMapping("/rank/{userId}")
-    public ResponseEntity<Integer> getRank(@PathVariable String userId) {
-        return ResponseEntity.ok(tokenQueueUseCase.getUserRank(userId));
+    public ResponseEntity<ApiResponse<Integer>> getRank(@PathVariable String userId) {
+        return ResponseEntity.ok(ApiResponse.ok(tokenQueueUseCase.getUserRank(userId)));
     }
 
     @GetMapping("/length")
-    public ResponseEntity<Integer> getLength() {
-        return ResponseEntity.ok(tokenQueueUseCase.getQueueLength());
+    public ResponseEntity<ApiResponse<Integer>> getLength() {
+        return ResponseEntity.ok(ApiResponse.ok(tokenQueueUseCase.getQueueLength()));
     }
 
     @GetMapping("/next")
-    public ResponseEntity<String> getNextUser() {
-        return ResponseEntity.ok(tokenQueueUseCase.getNextUser());
+    public ResponseEntity<ApiResponse<String>> getNextUser() {
+        return ResponseEntity.ok(ApiResponse.ok(tokenQueueUseCase.getNextUser()));
     }
 
     private void validateTokenQueueRequest(TokenQueueRequest request) {

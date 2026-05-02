@@ -2,6 +2,7 @@ package kr.hhplus.be.server.payment.presentation.controller;
 
 import kr.hhplus.be.server.common.exception.ClientInputException;
 import kr.hhplus.be.server.common.exception.ErrorCode;
+import kr.hhplus.be.server.common.presentation.ApiResponse;
 import kr.hhplus.be.server.payment.application.port.in.MakePaymentCommand;
 import kr.hhplus.be.server.payment.application.port.in.MakePaymentUseCase;
 import kr.hhplus.be.server.payment.presentation.dto.PaymentRequest;
@@ -20,11 +21,11 @@ public class PaymentController {
     private final MakePaymentUseCase makePaymentUseCase;
 
     @PostMapping
-    public ResponseEntity<PaymentResponse> createPayment(@RequestBody PaymentRequest request) {
+    public ResponseEntity<ApiResponse<PaymentResponse>> createPayment(@RequestBody PaymentRequest request) {
         validatePaymentRequest(request);
         var result = makePaymentUseCase.execute(new MakePaymentCommand(request.reservationId(), request.amount(), request.method()));
         var response = PaymentResponse.from(result);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(ApiResponse.ok(response));
     }
 
     private void validatePaymentRequest(PaymentRequest request) {

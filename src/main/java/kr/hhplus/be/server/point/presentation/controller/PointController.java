@@ -2,6 +2,7 @@ package kr.hhplus.be.server.point.presentation.controller;
 
 import kr.hhplus.be.server.common.exception.ClientInputException;
 import kr.hhplus.be.server.common.exception.ErrorCode;
+import kr.hhplus.be.server.common.presentation.ApiResponse;
 import kr.hhplus.be.server.point.application.port.in.ChargePointCommand;
 import kr.hhplus.be.server.point.application.port.in.ChargePointUseCase;
 import kr.hhplus.be.server.point.application.port.in.GetPointQuery;
@@ -23,20 +24,20 @@ public class PointController {
     private final GetPointUseCase getPointUseCase;
 
     @PostMapping("/charge")
-    public ResponseEntity<ChargePointResponse> chargePoint(@RequestBody ChargePointRequest request) {
+    public ResponseEntity<ApiResponse<ChargePointResponse>> chargePoint(@RequestBody ChargePointRequest request) {
         validateChargeRequest(request);
         var result = chargePointUseCase.execute(new ChargePointCommand(request.user().getId(), request.amount()));
         var response = ChargePointResponse.from(result);
 
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(ApiResponse.ok(response));
     }
 
     @GetMapping("/{userId}/balance")
-    public ResponseEntity<GetPointResponse> getPoint(@PathVariable UUID userId) {
+    public ResponseEntity<ApiResponse<GetPointResponse>> getPoint(@PathVariable UUID userId) {
         var result = getPointUseCase.execute(new GetPointQuery(userId));
         var response = GetPointResponse.from(result);
 
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(ApiResponse.ok(response));
     }
 
     private void validateChargeRequest(ChargePointRequest request) {

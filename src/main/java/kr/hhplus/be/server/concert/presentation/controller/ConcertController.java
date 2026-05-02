@@ -1,5 +1,6 @@
 package kr.hhplus.be.server.concert.presentation.controller;
 
+import kr.hhplus.be.server.common.presentation.ApiResponse;
 import kr.hhplus.be.server.concert.application.port.in.concertdate.GetConcertDatesQuery;
 import kr.hhplus.be.server.concert.application.port.in.concertdate.GetConcertDatesUseCase;
 import kr.hhplus.be.server.concert.application.port.in.seat.GetSeatsQuery;
@@ -24,26 +25,26 @@ public class ConcertController {
     private final GetConcertRankingService rankingService;
 
     @GetMapping("/{concertId}/dates")
-    public ResponseEntity<List<ConcertDateResponse>> getConcertDates(@PathVariable UUID concertId) {
+    public ResponseEntity<ApiResponse<List<ConcertDateResponse>>> getConcertDates(@PathVariable UUID concertId) {
         var results = getConcertDatesUseCase.execute(new GetConcertDatesQuery(concertId));
         var response = results.stream().map(ConcertDateResponse::from).toList();
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(ApiResponse.ok(response));
     }
 
     @GetMapping("/dates/{concertDateId}/seats")
-    public ResponseEntity<List<SeatResponse>> getSeatsByConcertDate(@PathVariable UUID concertDateId) {
+    public ResponseEntity<ApiResponse<List<SeatResponse>>> getSeatsByConcertDate(@PathVariable UUID concertDateId) {
         var results = getSeatsUseCase.execute(new GetSeatsQuery(concertDateId));
         var response = results.stream().map(SeatResponse::from).toList();
 
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(ApiResponse.ok(response));
     }
 
     @GetMapping("/concerts/rankings")
-    public ConcertRankingResponse rankings(
+    public ResponseEntity<ApiResponse<ConcertRankingResponse>> rankings(
             @RequestParam(defaultValue = "10") int limit
     ) {
-        return ConcertRankingResponse.from(
-                rankingService.getTopRankings(limit)
-        );
+        var response = ConcertRankingResponse.from(rankingService.getTopRankings(limit));
+
+        return ResponseEntity.ok(ApiResponse.ok(response));
     }
 }

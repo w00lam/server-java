@@ -2,6 +2,7 @@ package kr.hhplus.be.server.reservation.presentation.controller;
 
 import kr.hhplus.be.server.common.exception.ClientInputException;
 import kr.hhplus.be.server.common.exception.ErrorCode;
+import kr.hhplus.be.server.common.presentation.ApiResponse;
 import kr.hhplus.be.server.reservation.application.port.in.ConfirmReservationCommand;
 import kr.hhplus.be.server.reservation.application.port.in.ConfirmReservationUseCase;
 import kr.hhplus.be.server.reservation.application.port.in.MakeReservationCommand;
@@ -23,20 +24,20 @@ public class ReservationController {
     private final ConfirmReservationUseCase confirmReservationUseCase;
 
     @PostMapping
-    public ResponseEntity<MakeReservationResponse> makeReservation(@RequestBody MakeReservationRequest request) {
+    public ResponseEntity<ApiResponse<MakeReservationResponse>> makeReservation(@RequestBody MakeReservationRequest request) {
         validateMakeReservationRequest(request);
         var result = makeReservationUseCase.execute(new MakeReservationCommand(request.userId(), request.concertId(), request.seatId()));
         var response = MakeReservationResponse.from(result);
 
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(ApiResponse.ok(response));
     }
 
     @PostMapping("/{reservationId}/confirm")
-    public ResponseEntity<ConfirmReservationResponse> confirmReservation(@PathVariable UUID reservationId) {
+    public ResponseEntity<ApiResponse<ConfirmReservationResponse>> confirmReservation(@PathVariable UUID reservationId) {
         var result = confirmReservationUseCase.execute(new ConfirmReservationCommand(reservationId));
         var response = ConfirmReservationResponse.from(result);
 
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(ApiResponse.ok(response));
     }
 
     private void validateMakeReservationRequest(MakeReservationRequest request) {
