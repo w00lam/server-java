@@ -11,6 +11,7 @@ import org.awaitility.Awaitility;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.kafka.test.context.EmbeddedKafka;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 import java.util.concurrent.TimeUnit;
@@ -24,6 +25,7 @@ import static org.mockito.Mockito.verify;
         brokerProperties = { "listeners=PLAINTEXT://localhost:9092", "port=9092" },
         topics = { "reservation-confirmed" }
 )
+@TestPropertySource(properties = "spring.kafka.listener.auto-startup=true")
 public class KafkaPaymentIntegrationTest extends ReservationIntegrationTestBase {
     @MockitoSpyBean
     private KafkaReservationConsumer kafkaReservationConsumer;
