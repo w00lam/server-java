@@ -4,23 +4,18 @@ import kr.hhplus.be.server.concert.application.port.in.concertdate.GetConcertDat
 import kr.hhplus.be.server.concert.application.port.in.concertdate.GetConcertDatesUseCase;
 import kr.hhplus.be.server.concert.application.port.in.seat.GetSeatsQuery;
 import kr.hhplus.be.server.concert.application.port.in.seat.GetSeatsUseCase;
+import kr.hhplus.be.server.concert.domain.model.seat.Seat;
+import kr.hhplus.be.server.integration.ReservationIntegrationTestBase;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
-import kr.hhplus.be.server.TestcontainersConfiguration;
-import org.springframework.test.context.ContextConfiguration;
 
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@SpringBootTest
-@ActiveProfiles("test")
-@ContextConfiguration(initializers = TestcontainersConfiguration.Initializer.class)
-public class ConcertAndSeatPerformanceTest {
+public class ConcertAndSeatPerformanceTest extends ReservationIntegrationTestBase {
 
     @Autowired
     private GetConcertDatesUseCase getConcertDatesUseCase;
@@ -33,9 +28,10 @@ public class ConcertAndSeatPerformanceTest {
 
     @BeforeEach
     void setUp() {
-        // 테스트용 콘서트 ID 설정
-        testConcertId = UUID.fromString("3830d228-5a82-4088-b402-674f0df45ada");
-        testConcertDateId =UUID.fromString("C9021C25-810E-409A-AFA0-9A3C28C8139E");
+        // Create fresh query data so performance checks do not depend on preloaded UUIDs.
+        Seat seat = createSeat();
+        testConcertId = seat.getConcertDate().getConcert().getId();
+        testConcertDateId = seat.getConcertDate().getId();
     }
 
     @Test
