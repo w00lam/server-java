@@ -11,6 +11,7 @@ import org.awaitility.Awaitility;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.kafka.test.context.EmbeddedKafka;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
@@ -25,6 +26,7 @@ import static org.mockito.Mockito.verify;
         bootstrapServersProperty = "spring.kafka.bootstrap-servers",
         topics = { "reservation-confirmed" }
 )
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 @TestPropertySource(properties = "spring.kafka.listener.auto-startup=true")
 public class KafkaPaymentIntegrationTest extends ReservationIntegrationTestBase {
     @MockitoSpyBean
