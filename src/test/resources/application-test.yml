@@ -11,6 +11,7 @@ spring:
       port: 6380
 
   jpa:
+    generate-ddl: true
     hibernate:
       ddl-auto: update
     show-sql: true

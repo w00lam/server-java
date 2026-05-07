@@ -2,6 +2,15 @@
 
 Production runs with `spring.jpa.hibernate.ddl-auto=validate`, so entity metadata is used only to validate the database shape. Schema changes must be applied to the database before deploying an application version that depends on them.
 
+## Profile Policy
+
+| Profile | `ddl-auto` | Purpose |
+| --- | --- | --- |
+| common/default | `validate` | Prevent accidental schema mutation unless a profile explicitly opts in. |
+| local | `update` | Keep local Docker Compose databases convenient during development. |
+| test | `update` | Let Testcontainers/MySQL create and update the disposable test schema. |
+| prod | `validate` | Require SQL migrations before deploying code that depends on schema changes. |
+
 ## Payment Reservation Uniqueness
 
 The payment flow is idempotent per reservation. The database must enforce that rule with a unique constraint on `PAYMENTS.reservation_id`.
