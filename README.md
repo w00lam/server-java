@@ -282,6 +282,7 @@ Actuator는 운영 상태 확인에 필요한 endpoint만 노출합니다.
 - [Local Development Guide](docs/local-dev-guide.md)
 - [API Response Policy](docs/api-response-policy.md)
 - [Refactoring Summary](docs/refactoring-summary.md)
+- [Database Schema Migrations](docs/database-schema-migrations.md)
 - [OpenAPI Spec](docs/openapi.yml)
 - [ERD](docs/erd.md)
 - [Infrastructure](docs/infra.md)
