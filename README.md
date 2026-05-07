@@ -64,7 +64,7 @@ flowchart LR
 - 좌석 임시 선점
 - 예약 확정
 - 예약 취소
-- 만료된 좌석 선점 해제
+- 만료된 임시 예약 제외
 
 ### Payment and Point
 
