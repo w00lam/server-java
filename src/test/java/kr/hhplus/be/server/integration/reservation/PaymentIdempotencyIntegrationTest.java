@@ -7,6 +7,7 @@ import kr.hhplus.be.server.concert.domain.model.seat.Seat;
 import kr.hhplus.be.server.integration.ReservationIntegrationTestBase;
 import kr.hhplus.be.server.payment.application.port.in.MakePaymentCommand;
 import kr.hhplus.be.server.payment.domain.model.PaymentMethod;
+import kr.hhplus.be.server.reservation.domain.model.ReservationStatus;
 import kr.hhplus.be.server.user.domain.model.User;
 import org.junit.jupiter.api.Test;
 
@@ -29,6 +30,9 @@ public class PaymentIdempotencyIntegrationTest extends ReservationIntegrationTes
         assertThat(second.paymentId()).isEqualTo(first.paymentId());
         assertThat(second.status()).isEqualTo(first.status());
         assertThat(countPaymentsByReservationId(reservationId)).isEqualTo(1);
+
+        em.clear();
+        assertThat(userRepository.findById(user.getId()).getPoints()).isEqualTo(5_000);
     }
 
     @Test
@@ -43,6 +47,37 @@ public class PaymentIdempotencyIntegrationTest extends ReservationIntegrationTes
         ).isInstanceOf(BusinessRuleViolationException.class);
 
         assertThat(countPaymentsByReservationId(reservationId)).isEqualTo(1);
+
+        em.clear();
+        assertThat(userRepository.findById(user.getId()).getPoints()).isEqualTo(5_000);
+    }
+
+    @Test
+    void successfulPayment_deductsPointsAndConfirmsReservation() {
+        User user = createUserWithPoints(10_000);
+        UUID reservationId = createReservation(user);
+
+        makePaymentUseCase.execute(new MakePaymentCommand(reservationId, 5_000, PaymentMethod.CARD));
+
+        em.clear();
+        assertThat(userRepository.findById(user.getId()).getPoints()).isEqualTo(5_000);
+        assertThat(reservationRepository.findById(reservationId).getStatus()).isEqualTo(ReservationStatus.CONFIRMED);
+        assertThat(countPaymentsByReservationId(reservationId)).isEqualTo(1);
+    }
+
+    @Test
+    void insufficientPoints_doesNotConfirmReservationOrCreatePayment() {
+        User user = createUserWithPoints(1_000);
+        UUID reservationId = createReservation(user);
+
+        assertThatThrownBy(() ->
+                makePaymentUseCase.execute(new MakePaymentCommand(reservationId, 5_000, PaymentMethod.CARD))
+        ).isInstanceOf(BusinessRuleViolationException.class);
+
+        em.clear();
+        assertThat(userRepository.findById(user.getId()).getPoints()).isEqualTo(1_000);
+        assertThat(reservationRepository.findById(reservationId).getStatus()).isEqualTo(ReservationStatus.TEMP_HOLD);
+        assertThat(countPaymentsByReservationId(reservationId)).isEqualTo(0);
     }
 
     private UUID createReservation(User user) {

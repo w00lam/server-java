@@ -9,9 +9,11 @@ import kr.hhplus.be.server.payment.domain.model.Payment;
 import kr.hhplus.be.server.payment.domain.model.PaymentMethod;
 import kr.hhplus.be.server.payment.domain.model.PaymentStatus;
 import kr.hhplus.be.server.payment.domain.service.PaymentDomainService;
+import kr.hhplus.be.server.reservation.application.port.out.ReservationRepositoryPort;
 import kr.hhplus.be.server.reservation.application.service.ReservationConfirmationService;
 import kr.hhplus.be.server.reservation.domain.model.Reservation;
 import kr.hhplus.be.server.unit.BaseUnitTest;
+import kr.hhplus.be.server.user.domain.model.User;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -34,6 +36,9 @@ public class MakePaymentUseCaseImplTest extends BaseUnitTest {
     ReservationConfirmationService reservationConfirmationService;
 
     @Mock
+    ReservationRepositoryPort reservationRepositoryPort;
+
+    @Mock
     PaymentRepositoryPort paymentRepositoryPort;
 
     @Mock
@@ -51,8 +56,12 @@ public class MakePaymentUseCaseImplTest extends BaseUnitTest {
         UUID reservationId = fixedUUID();
         int amount = 10000;
 
+        User user = User.builder()
+                .points(20000)
+                .build();
         Reservation reservation = Reservation.builder()
                 .id(reservationId)
+                .user(user)
                 .build();
         Payment paidPayment = Payment.builder()
                 .id(UUID.randomUUID())
@@ -70,6 +79,7 @@ public class MakePaymentUseCaseImplTest extends BaseUnitTest {
 
         doNothing().when(paymentDomainService).validateAmount(amount);
         when(paymentRepositoryPort.findByReservationId(reservationId)).thenReturn(Optional.empty());
+        when(reservationRepositoryPort.findById(reservationId)).thenReturn(reservation);
         when(reservationConfirmationService.confirm(reservationId)).thenReturn(reservation);
         when(paymentDomainService.createPaid(reservation, amount, PaymentMethod.CARD, clock)).thenReturn(paidPayment);
         when(paymentRepositoryPort.save(paidPayment)).thenReturn(savedPayment);
@@ -78,6 +88,7 @@ public class MakePaymentUseCaseImplTest extends BaseUnitTest {
 
         assertEquals(savedPayment.getId(), result.paymentId());
         assertEquals(PaymentStatus.PAID.name(), result.status());
+        assertEquals(10000, user.getPoints());
 
         verify(reservationConfirmationService).confirm(reservationId);
     }
@@ -87,16 +98,50 @@ public class MakePaymentUseCaseImplTest extends BaseUnitTest {
     void execute_confirmationFailure() {
         UUID reservationId = fixedUUID();
         int amount = 10000;
+        User user = User.builder()
+                .points(20000)
+                .build();
+        Reservation reservation = Reservation.builder()
+                .id(reservationId)
+                .user(user)
+                .build();
         MakePaymentCommand command = new MakePaymentCommand(reservationId, amount, PaymentMethod.CARD);
 
         doNothing().when(paymentDomainService).validateAmount(amount);
         when(paymentRepositoryPort.findByReservationId(reservationId)).thenReturn(Optional.empty());
+        when(reservationRepositoryPort.findById(reservationId)).thenReturn(reservation);
         when(reservationConfirmationService.confirm(reservationId))
                 .thenThrow(BusinessRuleViolationException.class);
 
         assertThrows(BusinessRuleViolationException.class, () -> useCase.execute(command));
 
+        assertEquals(10000, user.getPoints());
         verify(reservationConfirmationService).confirm(reservationId);
+        verify(paymentRepositoryPort, never()).save(any(Payment.class));
+    }
+
+    @Test
+    @DisplayName("Payment stops before confirmation when user has insufficient points")
+    void execute_insufficientPoints() {
+        UUID reservationId = fixedUUID();
+        int amount = 10000;
+        User user = User.builder()
+                .points(5000)
+                .build();
+        Reservation reservation = Reservation.builder()
+                .id(reservationId)
+                .user(user)
+                .build();
+        MakePaymentCommand command = new MakePaymentCommand(reservationId, amount, PaymentMethod.CARD);
+
+        doNothing().when(paymentDomainService).validateAmount(amount);
+        when(paymentRepositoryPort.findByReservationId(reservationId)).thenReturn(Optional.empty());
+        when(reservationRepositoryPort.findById(reservationId)).thenReturn(reservation);
+
+        assertThrows(BusinessRuleViolationException.class, () -> useCase.execute(command));
+
+        assertEquals(5000, user.getPoints());
+        verify(reservationConfirmationService, never()).confirm(any());
         verify(paymentRepositoryPort, never()).save(any(Payment.class));
     }
 

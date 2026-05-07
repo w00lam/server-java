@@ -8,6 +8,7 @@ import kr.hhplus.be.server.payment.application.port.in.MakePaymentUseCase;
 import kr.hhplus.be.server.payment.application.port.out.PaymentRepositoryPort;
 import kr.hhplus.be.server.payment.domain.model.Payment;
 import kr.hhplus.be.server.payment.domain.service.PaymentDomainService;
+import kr.hhplus.be.server.reservation.application.port.out.ReservationRepositoryPort;
 import kr.hhplus.be.server.reservation.application.service.ReservationConfirmationService;
 import kr.hhplus.be.server.reservation.domain.model.Reservation;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +24,7 @@ import java.time.Clock;
 @RequiredArgsConstructor
 public class MakePaymentUseCaseImpl implements MakePaymentUseCase {
     private final ReservationConfirmationService reservationConfirmationService;
+    private final ReservationRepositoryPort reservationRepositoryPort;
     private final PaymentRepositoryPort paymentRepositoryPort;
     private final PaymentDomainService paymentDomainService;
     private final Clock clock;
@@ -36,6 +38,9 @@ public class MakePaymentUseCaseImpl implements MakePaymentUseCase {
         if (existingPayment.isPresent()) {
             return resultFromExisting(command, existingPayment.get());
         }
+
+        Reservation pendingReservation = reservationRepositoryPort.findById(command.reservationId());
+        pendingReservation.getUser().deductPoints(command.amount());
 
         Reservation reservation = reservationConfirmationService.confirm(command.reservationId());
 
