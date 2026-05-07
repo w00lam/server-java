@@ -45,7 +45,7 @@ public class ChargePointUseCaseImplTest extends BaseUnitTest {
                 .id(userId)
                 .email("test@example.com")
                 .name("Tester")
-                .points(0)
+                .points(1000)
                 .build();
 
         Point createdPoint = Point.builder()
@@ -54,21 +54,16 @@ public class ChargePointUseCaseImplTest extends BaseUnitTest {
                 .user(user)
                 .build();
 
-        Point savedPoint = Point.builder()
-                .id(fixedUUID())
-                .amount(amount)
-                .user(user)
-                .build();
-
         when(userRepositoryPort.findById(userId)).thenReturn(user);
         when(pointDomainService.createCharge(user, amount)).thenReturn(createdPoint);
-        when(pointRepositoryPort.save(createdPoint)).thenReturn(savedPoint);
 
         // when
         ChargePointResult result = useCase.execute(command);
 
         // then
-        assertEquals(savedPoint.getUser().getId(), result.userId());
+        assertEquals(user.getId(), result.userId());
+        assertEquals(6000, result.balance());
+        assertEquals(6000, user.getPoints());
 
         verify(userRepositoryPort).findById(userId);
         verify(pointDomainService).createCharge(user, amount);
