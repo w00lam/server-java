@@ -11,8 +11,13 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class PointDomainService {
-    public Point createCharge(User user, int amount) {
+    public Point charge(User user, int amount) {
         AmountValidator.requirePositive(amount);
+        user.addPoints(amount);
         return Point.createCharge(user, amount);
+    }
+
+    public void deduct(User user, int amount) {
+        user.deductPoints(amount);
     }
 }

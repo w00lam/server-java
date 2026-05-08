@@ -26,8 +26,7 @@ public class ChargePointUseCaseImpl implements ChargePointUseCase {
     @Transactional
     public ChargePointResult execute(ChargePointCommand command) {
         User user = userRepositoryPort.findById(command.userId());
-        Point point = pointDomainService.createCharge(user, command.amount());
-        user.addPoints(command.amount());
+        Point point = pointDomainService.charge(user, command.amount());
         pointRepositoryPort.save(point);
 
         return new ChargePointResult(user.getId(), user.getPoints());
