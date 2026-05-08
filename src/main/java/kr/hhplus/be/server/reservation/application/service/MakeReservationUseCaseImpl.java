@@ -18,7 +18,7 @@ import java.time.Duration;
 @Service
 @RequiredArgsConstructor
 public class MakeReservationUseCaseImpl implements MakeReservationUseCase {
-    private final ReservationTxService reservationTxService;
+    private final ReservationCreationService reservationCreationService;
     private final DistributedLockManager lockManager;
 
 
@@ -35,7 +35,7 @@ public class MakeReservationUseCaseImpl implements MakeReservationUseCase {
 
 
         try {
-            return reservationTxService.reserve(command);
+            return reservationCreationService.create(command);
         } finally {
             // Unlock with the owner token so another request's lock is not released accidentally.
             lockManager.unlock(lockKey, lockValue);

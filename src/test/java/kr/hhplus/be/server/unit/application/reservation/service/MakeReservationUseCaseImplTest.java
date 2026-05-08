@@ -5,7 +5,7 @@ import kr.hhplus.be.server.common.exception.ErrorCode;
 import kr.hhplus.be.server.reservation.application.port.in.MakeReservationCommand;
 import kr.hhplus.be.server.reservation.application.port.in.MakeReservationResult;
 import kr.hhplus.be.server.reservation.application.service.MakeReservationUseCaseImpl;
-import kr.hhplus.be.server.reservation.application.service.ReservationTxService;
+import kr.hhplus.be.server.reservation.application.service.ReservationCreationService;
 import kr.hhplus.be.server.concert.domain.model.seat.SeatLockKey;
 import kr.hhplus.be.server.reservation.domain.model.ReservationStatus;
 import kr.hhplus.be.server.common.application.lock.DistributedLockManager;
@@ -28,7 +28,7 @@ import static org.mockito.Mockito.when;
 
 public class MakeReservationUseCaseImplTest extends BaseUnitTest {
     @Mock
-    ReservationTxService reservationTxService;
+    ReservationCreationService reservationCreationService;
 
     @Mock
     DistributedLockManager lockManager;
@@ -56,7 +56,7 @@ public class MakeReservationUseCaseImplTest extends BaseUnitTest {
         );
 
         when(lockManager.lock(lockKey, Duration.ofSeconds(5))).thenReturn(lockValue);
-        when(reservationTxService.reserve(command)).thenReturn(expected);
+        when(reservationCreationService.create(command)).thenReturn(expected);
 
         MakeReservationResult result = useCase.execute(command);
 
@@ -84,6 +84,6 @@ public class MakeReservationUseCaseImplTest extends BaseUnitTest {
                 )
                 .hasMessage("이미 예약 중인 좌석입니다.");
 
-        verify(reservationTxService, never()).reserve(command);
+        verify(reservationCreationService, never()).create(command);
     }
 }

@@ -1,160 +1,47 @@
 package kr.hhplus.be.server.unit.application.payment.service;
 
-import kr.hhplus.be.server.common.exception.BusinessRuleViolationException;
 import kr.hhplus.be.server.payment.application.port.in.MakePaymentCommand;
 import kr.hhplus.be.server.payment.application.port.in.MakePaymentResult;
-import kr.hhplus.be.server.payment.application.port.out.PaymentRepositoryPort;
 import kr.hhplus.be.server.payment.application.service.MakePaymentUseCaseImpl;
+import kr.hhplus.be.server.payment.application.service.PaymentProcessor;
 import kr.hhplus.be.server.payment.domain.model.Payment;
 import kr.hhplus.be.server.payment.domain.model.PaymentMethod;
-import kr.hhplus.be.server.payment.domain.service.PaymentDomainService;
-import kr.hhplus.be.server.reservation.application.port.out.ReservationRepositoryPort;
-import kr.hhplus.be.server.reservation.application.service.ReservationConfirmationService;
-import kr.hhplus.be.server.reservation.domain.model.Reservation;
 import kr.hhplus.be.server.unit.BaseUnitTest;
 import kr.hhplus.be.server.unit.fixture.PaymentFixture;
 import kr.hhplus.be.server.unit.fixture.ReservationFixture;
-import kr.hhplus.be.server.unit.fixture.UserFixture;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 
-import java.time.Clock;
-import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class MakePaymentUseCaseImplTest extends BaseUnitTest {
     @Mock
-    ReservationConfirmationService reservationConfirmationService;
-
-    @Mock
-    ReservationRepositoryPort reservationRepositoryPort;
-
-    @Mock
-    PaymentRepositoryPort paymentRepositoryPort;
-
-    @Mock
-    PaymentDomainService paymentDomainService;
-
-    @Mock
-    Clock clock;
+    PaymentProcessor paymentProcessor;
 
     @InjectMocks
     MakePaymentUseCaseImpl useCase;
 
     @Test
-    @DisplayName("Payment confirms reservation before creating paid payment")
-    void execute_success() {
+    @DisplayName("Payment use case returns processor result")
+    void execute_returnsProcessorResult() {
         UUID reservationId = fixedUUID();
         int amount = 10000;
-
-        var user = UserFixture.user(UUID.randomUUID(), 20000);
-        Reservation reservation = ReservationFixture.reservation(reservationId, user);
-        Payment paidPayment = PaymentFixture.paid(UUID.randomUUID(), reservation, amount, PaymentMethod.CARD);
-        Payment savedPayment = PaymentFixture.paid(UUID.randomUUID(), reservation, amount, PaymentMethod.CARD);
+        var reservation = ReservationFixture.reservation(reservationId);
+        Payment payment = PaymentFixture.paid(UUID.randomUUID(), reservation, amount, PaymentMethod.CARD);
         MakePaymentCommand command = new MakePaymentCommand(reservationId, amount, PaymentMethod.CARD);
 
-        doNothing().when(paymentDomainService).validateAmount(amount);
-        when(paymentRepositoryPort.findByReservationId(reservationId)).thenReturn(Optional.empty());
-        when(reservationRepositoryPort.findById(reservationId)).thenReturn(reservation);
-        when(reservationConfirmationService.confirm(reservationId)).thenReturn(reservation);
-        when(paymentDomainService.createPaid(reservation, amount, PaymentMethod.CARD, clock)).thenReturn(paidPayment);
-        when(paymentRepositoryPort.save(paidPayment)).thenReturn(savedPayment);
+        when(paymentProcessor.process(command)).thenReturn(payment);
 
         MakePaymentResult result = useCase.execute(command);
 
-        assertEquals(savedPayment.getId(), result.paymentId());
+        assertEquals(payment.getId(), result.paymentId());
         assertEquals("PAID", result.status());
-        assertEquals(10000, user.getPoints());
-
-        verify(reservationConfirmationService).confirm(reservationId);
-    }
-
-    @Test
-    @DisplayName("Payment does not persist or publish when reservation confirmation fails")
-    void execute_confirmationFailure() {
-        UUID reservationId = fixedUUID();
-        int amount = 10000;
-        var user = UserFixture.user(UUID.randomUUID(), 20000);
-        Reservation reservation = ReservationFixture.reservation(reservationId, user);
-        MakePaymentCommand command = new MakePaymentCommand(reservationId, amount, PaymentMethod.CARD);
-
-        doNothing().when(paymentDomainService).validateAmount(amount);
-        when(paymentRepositoryPort.findByReservationId(reservationId)).thenReturn(Optional.empty());
-        when(reservationRepositoryPort.findById(reservationId)).thenReturn(reservation);
-        when(reservationConfirmationService.confirm(reservationId))
-                .thenThrow(BusinessRuleViolationException.class);
-
-        assertThrows(BusinessRuleViolationException.class, () -> useCase.execute(command));
-
-        assertEquals(10000, user.getPoints());
-        verify(reservationConfirmationService).confirm(reservationId);
-        verify(paymentRepositoryPort, never()).save(any(Payment.class));
-    }
-
-    @Test
-    @DisplayName("Payment stops before confirmation when user has insufficient points")
-    void execute_insufficientPoints() {
-        UUID reservationId = fixedUUID();
-        int amount = 10000;
-        var user = UserFixture.user(UUID.randomUUID(), 5000);
-        Reservation reservation = ReservationFixture.reservation(reservationId, user);
-        MakePaymentCommand command = new MakePaymentCommand(reservationId, amount, PaymentMethod.CARD);
-
-        doNothing().when(paymentDomainService).validateAmount(amount);
-        when(paymentRepositoryPort.findByReservationId(reservationId)).thenReturn(Optional.empty());
-        when(reservationRepositoryPort.findById(reservationId)).thenReturn(reservation);
-
-        assertThrows(BusinessRuleViolationException.class, () -> useCase.execute(command));
-
-        assertEquals(5000, user.getPoints());
-        verify(reservationConfirmationService, never()).confirm(any());
-        verify(paymentRepositoryPort, never()).save(any(Payment.class));
-    }
-
-    @Test
-    @DisplayName("Payment returns existing payment for duplicate same request")
-    void execute_duplicateSameRequest() {
-        UUID reservationId = fixedUUID();
-        int amount = 10000;
-        Payment existingPayment = PaymentFixture.paidRequest(UUID.randomUUID(), amount, PaymentMethod.CARD);
-        MakePaymentCommand command = new MakePaymentCommand(reservationId, amount, PaymentMethod.CARD);
-
-        doNothing().when(paymentDomainService).validateAmount(amount);
-        when(paymentRepositoryPort.findByReservationId(reservationId)).thenReturn(Optional.of(existingPayment));
-
-        MakePaymentResult result = useCase.execute(command);
-
-        assertEquals(existingPayment.getId(), result.paymentId());
-        assertEquals("PAID", result.status());
-
-        verify(reservationConfirmationService, never()).confirm(any());
-        verify(paymentRepositoryPort, never()).save(any(Payment.class));
-    }
-
-    @Test
-    @DisplayName("Payment rejects duplicate request with different amount")
-    void execute_duplicateDifferentRequest() {
-        UUID reservationId = fixedUUID();
-        int amount = 10000;
-        Payment existingPayment = PaymentFixture.paidRequest(UUID.randomUUID(), amount, PaymentMethod.CARD);
-        MakePaymentCommand command = new MakePaymentCommand(reservationId, amount + 1, PaymentMethod.CARD);
-
-        doNothing().when(paymentDomainService).validateAmount(amount + 1);
-        when(paymentRepositoryPort.findByReservationId(reservationId)).thenReturn(Optional.of(existingPayment));
-
-        assertThrows(BusinessRuleViolationException.class, () -> useCase.execute(command));
-
-        verify(reservationConfirmationService, never()).confirm(any());
-        verify(paymentRepositoryPort, never()).save(any(Payment.class));
+        verify(paymentProcessor).process(command);
     }
 }
