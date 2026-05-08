@@ -1,10 +1,9 @@
 package kr.hhplus.be.server.payment.application.service;
 
-import kr.hhplus.be.server.common.exception.BusinessRuleViolationException;
-import kr.hhplus.be.server.common.exception.ErrorCode;
 import kr.hhplus.be.server.payment.application.port.in.MakePaymentCommand;
 import kr.hhplus.be.server.payment.application.port.out.PaymentRepositoryPort;
 import kr.hhplus.be.server.payment.domain.model.Payment;
+import kr.hhplus.be.server.payment.domain.model.PaymentExceptions;
 import kr.hhplus.be.server.payment.domain.service.PaymentDomainService;
 import kr.hhplus.be.server.reservation.application.port.out.ReservationRepositoryPort;
 import kr.hhplus.be.server.reservation.application.service.ReservationConfirmationService;
@@ -45,10 +44,7 @@ public class PaymentProcessor {
 
     private Payment existingPayment(MakePaymentCommand command, Payment payment) {
         if (!payment.hasSameRequest(command.amount(), command.method())) {
-            throw new BusinessRuleViolationException(
-                    ErrorCode.PAYMENT_ALREADY_PROCESSED,
-                    "\uC774\uBBF8 \uACB0\uC81C\uB41C \uC608\uC57D\uC785\uB2C8\uB2E4."
-            );
+            throw PaymentExceptions.alreadyProcessed();
         }
 
         return payment;
