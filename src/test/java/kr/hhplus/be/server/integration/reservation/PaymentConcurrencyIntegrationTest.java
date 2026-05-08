@@ -5,6 +5,7 @@ import kr.hhplus.be.server.concert.domain.model.Concert;
 import kr.hhplus.be.server.concert.domain.model.ConcertDate;
 import kr.hhplus.be.server.concert.domain.model.seat.Seat;
 import kr.hhplus.be.server.integration.ReservationIntegrationTestBase;
+import kr.hhplus.be.server.integration.support.ConcurrencyTestSupport;
 import kr.hhplus.be.server.payment.application.port.in.MakePaymentCommand;
 import kr.hhplus.be.server.payment.domain.model.PaymentMethod;
 import kr.hhplus.be.server.reservation.domain.model.ReservationStatus;
@@ -14,11 +15,8 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -31,38 +29,21 @@ public class PaymentConcurrencyIntegrationTest extends ReservationIntegrationTes
         MakePaymentCommand command = new MakePaymentCommand(reservationId, 5_000, PaymentMethod.CARD);
 
         int threadCount = 5;
-        ExecutorService executor = Executors.newFixedThreadPool(threadCount);
-        CountDownLatch readyLatch = new CountDownLatch(threadCount);
-        CountDownLatch startLatch = new CountDownLatch(1);
-        CountDownLatch doneLatch = new CountDownLatch(threadCount);
-        ConcurrentLinkedQueue<UUID> successfulPaymentIds = new ConcurrentLinkedQueue<>();
-        ConcurrentLinkedQueue<Throwable> unexpectedFailures = new ConcurrentLinkedQueue<>();
-
-        for (int i = 0; i < threadCount; i++) {
-            executor.submit(() -> {
-                try {
-                    readyLatch.countDown();
-                    startLatch.await();
-
-                    successfulPaymentIds.add(makePaymentUseCase.execute(command).paymentId());
-                } catch (BusinessRuleViolationException expectedRaceLoss) {
-                    // Another transaction may confirm the reservation first.
-                } catch (Exception exception) {
-                    unexpectedFailures.add(exception);
-                } finally {
-                    doneLatch.countDown();
-                }
-            });
-        }
-
-        readyLatch.await();
-        startLatch.countDown();
-        doneLatch.await();
-        executor.shutdown();
+        var result = ConcurrencyTestSupport.runConcurrently(threadCount, index -> {
+            try {
+                return Optional.of(makePaymentUseCase.execute(command).paymentId());
+            } catch (BusinessRuleViolationException expectedRaceLoss) {
+                // Another transaction may confirm the reservation first.
+                return Optional.<UUID>empty();
+            }
+        });
+        var successfulPaymentIds = result.successes().stream()
+                .flatMap(Optional::stream)
+                .toList();
 
         em.clear();
 
-        assertThat(unexpectedFailures).isEmpty();
+        assertThat(result.failures()).isEmpty();
         assertThat(successfulPaymentIds).isNotEmpty();
         assertThat(successfulPaymentIds.stream().distinct()).hasSize(1);
         assertThat(countPaymentsByReservationId(reservationId)).isEqualTo(1);

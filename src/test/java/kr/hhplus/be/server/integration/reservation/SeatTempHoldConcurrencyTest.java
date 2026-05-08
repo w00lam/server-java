@@ -3,6 +3,7 @@ package kr.hhplus.be.server.integration.reservation;
 import kr.hhplus.be.server.concert.domain.model.Concert;
 import kr.hhplus.be.server.concert.domain.model.ConcertDate;
 import kr.hhplus.be.server.concert.domain.model.seat.Seat;
+import kr.hhplus.be.server.integration.support.ConcurrencyTestSupport;
 import kr.hhplus.be.server.reservation.domain.model.Reservation;
 import kr.hhplus.be.server.reservation.domain.model.ReservationStatus;
 import kr.hhplus.be.server.user.domain.model.User;
@@ -17,10 +18,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -49,49 +46,19 @@ public class SeatTempHoldConcurrencyTest extends ReservationIntegrationTestBase 
 
         Seat seat = createSeatWithConcert(concertDate, "A", "1", "1", "VIP");
         UUID seatId = seat.getId();
+        List<User> users = List.of(user1, user2, user3);
 
-        int threadCount = 3;
-        ExecutorService executor = Executors.newFixedThreadPool(threadCount);
-        CountDownLatch latch = new CountDownLatch(threadCount);
-        AtomicInteger successCount = new AtomicInteger();
-        AtomicInteger failCount = new AtomicInteger();
+        int threadCount = users.size();
 
         // when
-        executor.submit(() -> {
+        var result = ConcurrencyTestSupport.runConcurrently(threadCount, index -> {
             try {
-                reserveSeat(user1.getId(), concert.getId(), seatId);
-                successCount.incrementAndGet();
+                reserveSeat(users.get(index).getId(), concert.getId(), seatId);
+                return true;
             } catch (Exception exception) {
-                failCount.incrementAndGet();
-            } finally {
-                latch.countDown();
+                return false;
             }
         });
-
-        executor.submit(() -> {
-            try {
-                reserveSeat(user2.getId(), concert.getId(), seatId);
-                successCount.incrementAndGet();
-            } catch (Exception exception) {
-                failCount.incrementAndGet();
-            } finally {
-                latch.countDown();
-            }
-        });
-
-        executor.submit(() -> {
-            try {
-                reserveSeat(user3.getId(), concert.getId(), seatId);
-                successCount.incrementAndGet();
-            } catch (Exception exception) {
-                failCount.incrementAndGet();
-            } finally {
-                latch.countDown();
-            }
-        });
-
-        latch.await();
-        executor.shutdown();
 
         // then
         List<Reservation> reservations = jpaReservationRepository.findAll();
@@ -101,8 +68,8 @@ public class SeatTempHoldConcurrencyTest extends ReservationIntegrationTestBase 
                 .filter(r -> r.getStatus() == ReservationStatus.TEMP_HOLD)
                 .count();
 
-        assertThat(successCount.get()).isEqualTo(1);
-        assertThat(failCount.get()).isEqualTo(threadCount - 1);
+        assertThat(result.failures()).isEmpty();
+        assertThat(result.successes()).containsExactlyInAnyOrder(true, false, false);
         assertThat(tempHoldCount).isEqualTo(1);
     }
 }

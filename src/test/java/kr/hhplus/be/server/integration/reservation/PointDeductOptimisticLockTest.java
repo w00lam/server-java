@@ -1,22 +1,17 @@
 package kr.hhplus.be.server.integration.reservation;
 
+import kr.hhplus.be.server.integration.ReservationIntegrationTestBase;
+import kr.hhplus.be.server.integration.support.ConcurrencyTestSupport;
 import kr.hhplus.be.server.point.application.port.in.DeductPointCommand;
 import kr.hhplus.be.server.point.application.port.in.DeductPointUseCase;
 import kr.hhplus.be.server.user.domain.model.User;
 import kr.hhplus.be.server.user.infrastructure.persistence.UserRepositoryImpl;
-import kr.hhplus.be.server.integration.ReservationIntegrationTestBase;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -31,7 +26,6 @@ public class PointDeductOptimisticLockTest extends ReservationIntegrationTestBas
     @Test
     @DisplayName("동일 사용자 포인트를 동시에 차감하면 1건만 성공하고 나머지는 실패한다 (낙관적 락)")
     void deduct_point_concurrently_with_optimistic_lock() throws Exception {
-        // given
         User user = User.builder()
                 .name("test")
                 .email("test@test.com")
@@ -41,51 +35,22 @@ public class PointDeductOptimisticLockTest extends ReservationIntegrationTestBas
         userRepository.save(user);
 
         int threadCount = 3;
-        ExecutorService executor = Executors.newFixedThreadPool(threadCount);
-
-        CountDownLatch readyLatch = new CountDownLatch(threadCount);
-        CountDownLatch startLatch = new CountDownLatch(1);
-        CountDownLatch doneLatch = new CountDownLatch(threadCount);
-
-        AtomicInteger success = new AtomicInteger();
-        AtomicInteger fail = new AtomicInteger();
-        ConcurrentLinkedQueue<Throwable> unexpectedFailures = new ConcurrentLinkedQueue<>();
-
         DeductPointCommand command =
                 new DeductPointCommand(user.getId(), 100);
 
-        // when
-        for (int i = 0; i < threadCount; i++) {
-            executor.submit(() -> {
-                try {
-                    readyLatch.countDown();      // 준비 완료
-                    startLatch.await();          // 동시에 출발
+        var result = ConcurrencyTestSupport.runConcurrently(threadCount, index -> {
+            try {
+                deductPointUseCase.execute(command);
+                return true;
+            } catch (ObjectOptimisticLockingFailureException expectedRaceLoss) {
+                return false;
+            }
+        });
 
-                    deductPointUseCase.execute(command);
-                    success.incrementAndGet();
+        User savedUser = userRepository.findById(user.getId());
 
-                } catch (ObjectOptimisticLockingFailureException e) {
-                    fail.incrementAndGet();
-                } catch (Exception exception) {
-                    unexpectedFailures.add(exception);
-                } finally {
-                    doneLatch.countDown();
-                }
-            });
-        }
-
-        readyLatch.await();       // 모든 스레드 준비될 때까지 대기
-        startLatch.countDown();   // 🔥 동시에 시작
-        doneLatch.await();
-
-        executor.shutdown();
-
-        // then
-        User result = userRepository.findById(user.getId());
-
-        assertThat(unexpectedFailures).isEmpty();
-        assertThat(success.get()).isEqualTo(1);
-        assertThat(fail.get()).isEqualTo(threadCount - 1);
-        assertThat(result.getPoints()).isEqualTo(1000000 - 100);
+        assertThat(result.failures()).isEmpty();
+        assertThat(result.successes()).containsExactlyInAnyOrder(true, false, false);
+        assertThat(savedUser.getPoints()).isEqualTo(1000000 - 100);
     }
 }

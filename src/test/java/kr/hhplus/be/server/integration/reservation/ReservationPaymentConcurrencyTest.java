@@ -3,6 +3,7 @@ package kr.hhplus.be.server.integration.reservation;
 import kr.hhplus.be.server.common.exception.BusinessRuleViolationException;
 import kr.hhplus.be.server.concert.domain.model.seat.Seat;
 import kr.hhplus.be.server.integration.ReservationIntegrationTestBase;
+import kr.hhplus.be.server.integration.support.ConcurrencyTestSupport;
 import kr.hhplus.be.server.payment.application.port.in.MakePaymentCommand;
 import kr.hhplus.be.server.payment.domain.model.PaymentMethod;
 import kr.hhplus.be.server.reservation.application.port.in.MakeReservationCommand;
@@ -13,11 +14,8 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -35,48 +33,32 @@ public class ReservationPaymentConcurrencyTest extends ReservationIntegrationTes
         UUID seatId = seat.getId();
 
         int threadCount = users.size();
-        ExecutorService executor = Executors.newFixedThreadPool(threadCount);
-        CountDownLatch readyLatch = new CountDownLatch(threadCount);
-        CountDownLatch startLatch = new CountDownLatch(1);
-        CountDownLatch doneLatch = new CountDownLatch(threadCount);
-        ConcurrentLinkedQueue<UUID> paidReservationIds = new ConcurrentLinkedQueue<>();
-        ConcurrentLinkedQueue<Throwable> unexpectedFailures = new ConcurrentLinkedQueue<>();
+        var result = ConcurrencyTestSupport.runConcurrently(threadCount, index -> {
+            User user = users.get(index);
+            try {
+                var reservation = makeReservationUseCase.execute(
+                        new MakeReservationCommand(user.getId(), concertId, seatId)
+                );
+                makePaymentUseCase.execute(
+                        new MakePaymentCommand(reservation.reservationId(), 500, PaymentMethod.CARD)
+                );
 
-        for (User user : users) {
-            executor.submit(() -> {
-                try {
-                    readyLatch.countDown();
-                    startLatch.await();
-
-                    var reservation = makeReservationUseCase.execute(
-                            new MakeReservationCommand(user.getId(), concertId, seatId)
-                    );
-                    makePaymentUseCase.execute(
-                            new MakePaymentCommand(reservation.reservationId(), 500, PaymentMethod.CARD)
-                    );
-
-                    paidReservationIds.add(reservation.reservationId());
-                } catch (BusinessRuleViolationException expectedRaceLoss) {
-                    // Another request may reserve and pay the seat first.
-                } catch (Exception exception) {
-                    unexpectedFailures.add(exception);
-                } finally {
-                    doneLatch.countDown();
-                }
-            });
-        }
-
-        readyLatch.await();
-        startLatch.countDown();
-        doneLatch.await();
-        executor.shutdown();
+                return Optional.of(reservation.reservationId());
+            } catch (BusinessRuleViolationException expectedRaceLoss) {
+                // Another request may reserve and pay the seat first.
+                return Optional.<UUID>empty();
+            }
+        });
+        var paidReservationIds = result.successes().stream()
+                .flatMap(Optional::stream)
+                .toList();
 
         em.clear();
 
-        assertThat(unexpectedFailures).isEmpty();
+        assertThat(result.failures()).isEmpty();
         assertThat(paidReservationIds).hasSize(1);
 
-        UUID paidReservationId = paidReservationIds.iterator().next();
+        UUID paidReservationId = paidReservationIds.get(0);
         assertThat(countPaymentsByReservationId(paidReservationId)).isEqualTo(1);
         assertThat(countReservationsBySeatAndStatus(seat, ReservationStatus.CONFIRMED)).isEqualTo(1);
 
