@@ -1,14 +1,13 @@
 package kr.hhplus.be.server.reservation.application.service;
 
 import kr.hhplus.be.server.common.application.event.DomainEventPublisher;
-import kr.hhplus.be.server.common.exception.BusinessRuleViolationException;
-import kr.hhplus.be.server.common.exception.ErrorCode;
 import kr.hhplus.be.server.reservation.application.event.ReservationCanceledEvent;
 import kr.hhplus.be.server.reservation.application.port.in.CancelReservationCommand;
 import kr.hhplus.be.server.reservation.application.port.in.CancelReservationResult;
 import kr.hhplus.be.server.reservation.application.port.in.CancelReservationUseCase;
 import kr.hhplus.be.server.reservation.application.port.out.ReservationRepositoryPort;
 import kr.hhplus.be.server.reservation.domain.model.Reservation;
+import kr.hhplus.be.server.reservation.domain.model.ReservationExceptions;
 import kr.hhplus.be.server.reservation.domain.model.ReservationStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -30,7 +29,7 @@ public class CancelReservationUseCaseImpl implements CancelReservationUseCase {
         Reservation reservation = reservationRepository.findById(command.reservationId());
 
         if (reservation.getStatus() == ReservationStatus.CANCELED) {
-            throw new BusinessRuleViolationException(ErrorCode.RESERVATION_ALREADY_CANCELLED, "이미 취소된 예약입니다.");
+            throw ReservationExceptions.alreadyCancelled();
         }
 
         boolean wasConfirmed = reservation.getStatus() == ReservationStatus.CONFIRMED;

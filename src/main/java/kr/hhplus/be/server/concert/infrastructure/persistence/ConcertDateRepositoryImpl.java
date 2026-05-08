@@ -1,5 +1,6 @@
 package kr.hhplus.be.server.concert.infrastructure.persistence;
 
+import kr.hhplus.be.server.concert.application.port.in.concertdate.GetConcertDatesResult;
 import kr.hhplus.be.server.concert.application.port.out.ConcertDateRepositoryPort;
 import kr.hhplus.be.server.concert.domain.model.ConcertDate;
 import lombok.RequiredArgsConstructor;
@@ -23,7 +24,7 @@ public class ConcertDateRepositoryImpl implements ConcertDateRepositoryPort {
     }
 
     @Override
-    public List<ConcertDate> findDatesByConcertId(UUID concertId) {
-        return jpa.findAllByConcert_Id(concertId);
+    public List<GetConcertDatesResult> findDateResultsByConcertId(UUID concertId) {
+        return jpa.findDateResultsByConcertId(concertId);
     }
 }

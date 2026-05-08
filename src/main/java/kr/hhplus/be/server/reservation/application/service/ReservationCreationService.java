@@ -2,12 +2,11 @@ package kr.hhplus.be.server.reservation.application.service;
 
 import kr.hhplus.be.server.concert.application.port.out.SeatRepositoryPort;
 import kr.hhplus.be.server.concert.domain.model.seat.Seat;
-import kr.hhplus.be.server.common.exception.BusinessRuleViolationException;
-import kr.hhplus.be.server.common.exception.ErrorCode;
 import kr.hhplus.be.server.reservation.application.port.in.MakeReservationCommand;
 import kr.hhplus.be.server.reservation.application.port.in.MakeReservationResult;
 import kr.hhplus.be.server.reservation.application.port.out.ReservationRepositoryPort;
 import kr.hhplus.be.server.reservation.domain.model.Reservation;
+import kr.hhplus.be.server.reservation.domain.model.ReservationExceptions;
 import kr.hhplus.be.server.reservation.domain.model.ReservationExpirationPolicy;
 import kr.hhplus.be.server.user.application.port.out.UserRepositoryPort;
 import kr.hhplus.be.server.user.domain.model.User;
@@ -39,7 +38,7 @@ public class ReservationCreationService {
 
         // Active holds are the only records that should block a new temporary reservation.
         if (reservationRepositoryPort.existsActiveReservationBySeat(seat, now)) {
-            throw new BusinessRuleViolationException(ErrorCode.SEAT_ALREADY_RESERVED, "?대? ?덉빟 以묒씤 醫뚯꽍?낅땲??");
+            throw ReservationExceptions.seatAlreadyReserved();
         }
 
         Reservation tempHold = Reservation.create(user, seat, clock, policy);

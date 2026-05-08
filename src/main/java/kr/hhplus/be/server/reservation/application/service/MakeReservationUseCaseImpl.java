@@ -5,8 +5,7 @@ import kr.hhplus.be.server.reservation.application.port.in.MakeReservationResult
 import kr.hhplus.be.server.reservation.application.port.in.MakeReservationUseCase;
 import kr.hhplus.be.server.concert.domain.model.seat.SeatLockKey;
 import kr.hhplus.be.server.common.application.lock.DistributedLockManager;
-import kr.hhplus.be.server.common.exception.BusinessRuleViolationException;
-import kr.hhplus.be.server.common.exception.ErrorCode;
+import kr.hhplus.be.server.reservation.domain.model.ReservationExceptions;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -30,7 +29,7 @@ public class MakeReservationUseCaseImpl implements MakeReservationUseCase {
 
 
         if (lockValue == null) {
-            throw new BusinessRuleViolationException(ErrorCode.SEAT_ALREADY_RESERVED, "이미 예약 중인 좌석입니다.");
+            throw ReservationExceptions.seatAlreadyReserved();
         }
 
 

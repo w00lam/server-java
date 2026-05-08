@@ -22,15 +22,6 @@ public class GetSeatsUseCaseImpl implements GetSeatsUseCase {
     @Override
     @Cacheable(value = "seats", key = "#query.concertDateId")
     public List<GetSeatsResult> execute(GetSeatsQuery query) {
-        return seatRepositoryPort.findSeatsByConcertDateId(query.concertDateId())
-                .stream()
-                .map(seat -> new GetSeatsResult(
-                        seat.getId(),
-                        seat.getSection(),
-                        seat.getRow(),
-                        seat.getNumber(),
-                        seat.getGrade()
-                ))
-                .toList();
+        return seatRepositoryPort.findSeatResultsByConcertDateId(query.concertDateId());
     }
 }

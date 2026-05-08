@@ -1,5 +1,6 @@
 package kr.hhplus.be.server.concert.infrastructure.persistence;
 
+import kr.hhplus.be.server.concert.application.port.in.seat.GetSeatsResult;
 import kr.hhplus.be.server.concert.application.port.out.SeatRepositoryPort;
 import kr.hhplus.be.server.concert.domain.model.seat.Seat;
 import kr.hhplus.be.server.common.exception.ErrorCode;
@@ -29,7 +30,7 @@ public class SeatRepositoryImpl implements SeatRepositoryPort {
     }
 
     @Override
-    public List<Seat> findSeatsByConcertDateId(UUID concertDateId) {
-        return jpa.findAllByConcertDate_Id(concertDateId);
+    public List<GetSeatsResult> findSeatResultsByConcertDateId(UUID concertDateId) {
+        return jpa.findSeatResultsByConcertDateId(concertDateId);
     }
 }

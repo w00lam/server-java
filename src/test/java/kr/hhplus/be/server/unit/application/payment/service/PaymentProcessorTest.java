@@ -11,6 +11,7 @@ import kr.hhplus.be.server.payment.domain.service.PaymentDomainService;
 import kr.hhplus.be.server.reservation.application.port.out.ReservationRepositoryPort;
 import kr.hhplus.be.server.reservation.application.service.ReservationConfirmationService;
 import kr.hhplus.be.server.reservation.domain.model.Reservation;
+import kr.hhplus.be.server.reservation.domain.model.ReservationExceptions;
 import kr.hhplus.be.server.unit.BaseUnitTest;
 import kr.hhplus.be.server.unit.fixture.PaymentFixture;
 import kr.hhplus.be.server.unit.fixture.ReservationFixture;
@@ -91,10 +92,7 @@ public class PaymentProcessorTest extends BaseUnitTest {
         when(paymentRepositoryPort.findByReservationId(reservationId)).thenReturn(Optional.empty());
         when(reservationRepositoryPort.findById(reservationId)).thenReturn(reservation);
         when(reservationConfirmationService.confirm(reservationId))
-                .thenThrow(new BusinessRuleViolationException(
-                        ErrorCode.RESERVATION_EXPIRED_OR_PROCESSED,
-                        "예약이 만료되었거나 이미 처리되었습니다."
-                ));
+                .thenThrow(ReservationExceptions.expiredOrProcessed());
 
         BusinessRuleViolationException exception =
                 assertThrows(BusinessRuleViolationException.class, () -> paymentProcessor.process(command));

@@ -21,9 +21,6 @@ public class GetConcertDatesUseCaseImpl implements GetConcertDatesUseCase {
     @Override
     @Cacheable(value = "concertDates", key = "#query.concertId")
     public List<GetConcertDatesResult> execute(GetConcertDatesQuery query) {
-        return concertDateRepositoryPort.findDatesByConcertId(query.concertId())
-                .stream()
-                .map(date -> new GetConcertDatesResult(date.getId(), date.getEventDate()))
-                .toList();
+        return concertDateRepositoryPort.findDateResultsByConcertId(query.concertId());
     }
 }
