@@ -5,6 +5,7 @@ import kr.hhplus.be.server.payment.application.port.out.PaymentRepositoryPort;
 import kr.hhplus.be.server.payment.domain.model.Payment;
 import kr.hhplus.be.server.payment.domain.model.PaymentExceptions;
 import kr.hhplus.be.server.payment.domain.service.PaymentDomainService;
+import kr.hhplus.be.server.point.domain.service.PointDomainService;
 import kr.hhplus.be.server.reservation.application.port.out.ReservationRepositoryPort;
 import kr.hhplus.be.server.reservation.application.service.ReservationConfirmationService;
 import kr.hhplus.be.server.reservation.domain.model.Reservation;
@@ -21,6 +22,7 @@ public class PaymentProcessor {
     private final ReservationRepositoryPort reservationRepositoryPort;
     private final PaymentRepositoryPort paymentRepositoryPort;
     private final PaymentDomainService paymentDomainService;
+    private final PointDomainService pointDomainService;
     private final Clock clock;
 
     @Transactional
@@ -33,7 +35,7 @@ public class PaymentProcessor {
         }
 
         Reservation pendingReservation = reservationRepositoryPort.findById(command.reservationId());
-        pendingReservation.getUser().deductPoints(command.amount());
+        pointDomainService.deduct(pendingReservation.getUser(), command.amount());
 
         Reservation reservation = reservationConfirmationService.confirm(command.reservationId());
 

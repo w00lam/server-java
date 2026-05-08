@@ -8,6 +8,7 @@ import kr.hhplus.be.server.payment.application.service.PaymentProcessor;
 import kr.hhplus.be.server.payment.domain.model.Payment;
 import kr.hhplus.be.server.payment.domain.model.PaymentMethod;
 import kr.hhplus.be.server.payment.domain.service.PaymentDomainService;
+import kr.hhplus.be.server.point.domain.service.PointDomainService;
 import kr.hhplus.be.server.reservation.application.port.out.ReservationRepositoryPort;
 import kr.hhplus.be.server.reservation.application.service.ReservationConfirmationService;
 import kr.hhplus.be.server.reservation.domain.model.Reservation;
@@ -29,6 +30,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -46,6 +50,9 @@ public class PaymentProcessorTest extends BaseUnitTest {
 
     @Mock
     PaymentDomainService paymentDomainService;
+
+    @Mock
+    PointDomainService pointDomainService;
 
     @Mock
     Clock clock;
@@ -68,6 +75,10 @@ public class PaymentProcessorTest extends BaseUnitTest {
         doNothing().when(paymentDomainService).validateAmount(amount);
         when(paymentRepositoryPort.findByReservationId(reservationId)).thenReturn(Optional.empty());
         when(reservationRepositoryPort.findById(reservationId)).thenReturn(reservation);
+        doAnswer(invocation -> {
+            user.deductPoints(amount);
+            return null;
+        }).when(pointDomainService).deduct(user, amount);
         when(reservationConfirmationService.confirm(reservationId)).thenReturn(reservation);
         when(paymentDomainService.createPaid(reservation, amount, PaymentMethod.CARD, clock)).thenReturn(paidPayment);
         when(paymentRepositoryPort.save(paidPayment)).thenReturn(savedPayment);
@@ -76,6 +87,7 @@ public class PaymentProcessorTest extends BaseUnitTest {
 
         assertSame(savedPayment, result);
         assertEquals(10000, user.getPoints());
+        verify(pointDomainService).deduct(user, amount);
         verify(reservationConfirmationService).confirm(reservationId);
     }
 
@@ -91,6 +103,10 @@ public class PaymentProcessorTest extends BaseUnitTest {
         doNothing().when(paymentDomainService).validateAmount(amount);
         when(paymentRepositoryPort.findByReservationId(reservationId)).thenReturn(Optional.empty());
         when(reservationRepositoryPort.findById(reservationId)).thenReturn(reservation);
+        doAnswer(invocation -> {
+            user.deductPoints(amount);
+            return null;
+        }).when(pointDomainService).deduct(user, amount);
         when(reservationConfirmationService.confirm(reservationId))
                 .thenThrow(ReservationExceptions.expiredOrProcessed());
 
@@ -99,6 +115,7 @@ public class PaymentProcessorTest extends BaseUnitTest {
 
         assertEquals(ErrorCode.RESERVATION_EXPIRED_OR_PROCESSED, exception.errorCode());
         assertEquals(10000, user.getPoints());
+        verify(pointDomainService).deduct(user, amount);
         verify(reservationConfirmationService).confirm(reservationId);
         verify(paymentRepositoryPort, never()).save(any(Payment.class));
     }
@@ -115,12 +132,17 @@ public class PaymentProcessorTest extends BaseUnitTest {
         doNothing().when(paymentDomainService).validateAmount(amount);
         when(paymentRepositoryPort.findByReservationId(reservationId)).thenReturn(Optional.empty());
         when(reservationRepositoryPort.findById(reservationId)).thenReturn(reservation);
+        doAnswer(invocation -> {
+            user.deductPoints(amount);
+            return null;
+        }).when(pointDomainService).deduct(user, amount);
 
         BusinessRuleViolationException exception =
                 assertThrows(BusinessRuleViolationException.class, () -> paymentProcessor.process(command));
 
         assertEquals(ErrorCode.INSUFFICIENT_POINTS, exception.errorCode());
         assertEquals(5000, user.getPoints());
+        verify(pointDomainService).deduct(user, amount);
         verify(reservationConfirmationService, never()).confirm(any());
         verify(paymentRepositoryPort, never()).save(any(Payment.class));
     }
@@ -139,6 +161,7 @@ public class PaymentProcessorTest extends BaseUnitTest {
         Payment result = paymentProcessor.process(command);
 
         assertSame(existingPayment, result);
+        verify(pointDomainService, never()).deduct(any(), anyInt());
         verify(reservationConfirmationService, never()).confirm(any());
         verify(paymentRepositoryPort, never()).save(any(Payment.class));
     }
@@ -158,6 +181,7 @@ public class PaymentProcessorTest extends BaseUnitTest {
                 assertThrows(BusinessRuleViolationException.class, () -> paymentProcessor.process(command));
 
         assertEquals(ErrorCode.PAYMENT_ALREADY_PROCESSED, exception.errorCode());
+        verify(pointDomainService, never()).deduct(any(), eq(amount + 1));
         verify(reservationConfirmationService, never()).confirm(any());
         verify(paymentRepositoryPort, never()).save(any(Payment.class));
     }
