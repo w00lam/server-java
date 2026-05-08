@@ -5,12 +5,10 @@ import kr.hhplus.be.server.common.exception.BusinessRuleViolationException;
 import kr.hhplus.be.server.reservation.application.event.ReservationConfirmedEvent;
 import kr.hhplus.be.server.reservation.application.port.out.ReservationRepositoryPort;
 import kr.hhplus.be.server.reservation.application.service.ReservationConfirmationService;
-import kr.hhplus.be.server.concert.domain.model.Concert;
-import kr.hhplus.be.server.concert.domain.model.ConcertDate;
-import kr.hhplus.be.server.concert.domain.model.seat.Seat;
 import kr.hhplus.be.server.reservation.domain.model.Reservation;
-import kr.hhplus.be.server.reservation.domain.model.ReservationStatus;
 import kr.hhplus.be.server.unit.BaseUnitTest;
+import kr.hhplus.be.server.unit.fixture.ConcertFixture;
+import kr.hhplus.be.server.unit.fixture.ReservationFixture;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
@@ -46,21 +44,10 @@ public class ReservationConfirmationServiceTest extends BaseUnitTest {
 
     @Test
     void confirm_publishesReservationConfirmedEvent() {
-        Concert concert = Concert.builder()
-                .id(fixedUUID())
-                .build();
-        ConcertDate concertDate = ConcertDate.builder()
-                .concert(concert)
-                .build();
-        Seat seat = Seat.builder()
-                .concertDate(concertDate)
-                .build();
-        Reservation reservation = Reservation.builder()
-                .id(fixedUUID2())
-                .seat(seat)
-                .status(ReservationStatus.CONFIRMED)
-                .confirmedAt(fixedNow())
-                .build();
+        var concert = ConcertFixture.concert(fixedUUID());
+        var concertDate = ConcertFixture.concertDate(concert);
+        var seat = ConcertFixture.seat(concertDate);
+        Reservation reservation = ReservationFixture.confirmed(fixedUUID2(), seat, fixedNow());
 
         freezeClock();
         when(reservationRepository.confirmIfNotExpired(fixedUUID2(), fixedNow())).thenReturn(true);

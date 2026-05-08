@@ -7,13 +7,14 @@ import kr.hhplus.be.server.payment.application.port.out.PaymentRepositoryPort;
 import kr.hhplus.be.server.payment.application.service.MakePaymentUseCaseImpl;
 import kr.hhplus.be.server.payment.domain.model.Payment;
 import kr.hhplus.be.server.payment.domain.model.PaymentMethod;
-import kr.hhplus.be.server.payment.domain.model.PaymentStatus;
 import kr.hhplus.be.server.payment.domain.service.PaymentDomainService;
 import kr.hhplus.be.server.reservation.application.port.out.ReservationRepositoryPort;
 import kr.hhplus.be.server.reservation.application.service.ReservationConfirmationService;
 import kr.hhplus.be.server.reservation.domain.model.Reservation;
 import kr.hhplus.be.server.unit.BaseUnitTest;
-import kr.hhplus.be.server.user.domain.model.User;
+import kr.hhplus.be.server.unit.fixture.PaymentFixture;
+import kr.hhplus.be.server.unit.fixture.ReservationFixture;
+import kr.hhplus.be.server.unit.fixture.UserFixture;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -56,25 +57,10 @@ public class MakePaymentUseCaseImplTest extends BaseUnitTest {
         UUID reservationId = fixedUUID();
         int amount = 10000;
 
-        User user = User.builder()
-                .points(20000)
-                .build();
-        Reservation reservation = Reservation.builder()
-                .id(reservationId)
-                .user(user)
-                .build();
-        Payment paidPayment = Payment.builder()
-                .id(UUID.randomUUID())
-                .status(PaymentStatus.PAID)
-                .amount(amount)
-                .reservation(reservation)
-                .build();
-        Payment savedPayment = Payment.builder()
-                .id(UUID.randomUUID())
-                .status(PaymentStatus.PAID)
-                .amount(amount)
-                .reservation(reservation)
-                .build();
+        var user = UserFixture.user(UUID.randomUUID(), 20000);
+        Reservation reservation = ReservationFixture.reservation(reservationId, user);
+        Payment paidPayment = PaymentFixture.paid(UUID.randomUUID(), reservation, amount, PaymentMethod.CARD);
+        Payment savedPayment = PaymentFixture.paid(UUID.randomUUID(), reservation, amount, PaymentMethod.CARD);
         MakePaymentCommand command = new MakePaymentCommand(reservationId, amount, PaymentMethod.CARD);
 
         doNothing().when(paymentDomainService).validateAmount(amount);
@@ -87,7 +73,7 @@ public class MakePaymentUseCaseImplTest extends BaseUnitTest {
         MakePaymentResult result = useCase.execute(command);
 
         assertEquals(savedPayment.getId(), result.paymentId());
-        assertEquals(PaymentStatus.PAID.name(), result.status());
+        assertEquals("PAID", result.status());
         assertEquals(10000, user.getPoints());
 
         verify(reservationConfirmationService).confirm(reservationId);
@@ -98,13 +84,8 @@ public class MakePaymentUseCaseImplTest extends BaseUnitTest {
     void execute_confirmationFailure() {
         UUID reservationId = fixedUUID();
         int amount = 10000;
-        User user = User.builder()
-                .points(20000)
-                .build();
-        Reservation reservation = Reservation.builder()
-                .id(reservationId)
-                .user(user)
-                .build();
+        var user = UserFixture.user(UUID.randomUUID(), 20000);
+        Reservation reservation = ReservationFixture.reservation(reservationId, user);
         MakePaymentCommand command = new MakePaymentCommand(reservationId, amount, PaymentMethod.CARD);
 
         doNothing().when(paymentDomainService).validateAmount(amount);
@@ -125,13 +106,8 @@ public class MakePaymentUseCaseImplTest extends BaseUnitTest {
     void execute_insufficientPoints() {
         UUID reservationId = fixedUUID();
         int amount = 10000;
-        User user = User.builder()
-                .points(5000)
-                .build();
-        Reservation reservation = Reservation.builder()
-                .id(reservationId)
-                .user(user)
-                .build();
+        var user = UserFixture.user(UUID.randomUUID(), 5000);
+        Reservation reservation = ReservationFixture.reservation(reservationId, user);
         MakePaymentCommand command = new MakePaymentCommand(reservationId, amount, PaymentMethod.CARD);
 
         doNothing().when(paymentDomainService).validateAmount(amount);
@@ -150,12 +126,7 @@ public class MakePaymentUseCaseImplTest extends BaseUnitTest {
     void execute_duplicateSameRequest() {
         UUID reservationId = fixedUUID();
         int amount = 10000;
-        Payment existingPayment = Payment.builder()
-                .id(UUID.randomUUID())
-                .amount(amount)
-                .method(PaymentMethod.CARD)
-                .status(PaymentStatus.PAID)
-                .build();
+        Payment existingPayment = PaymentFixture.paidRequest(UUID.randomUUID(), amount, PaymentMethod.CARD);
         MakePaymentCommand command = new MakePaymentCommand(reservationId, amount, PaymentMethod.CARD);
 
         doNothing().when(paymentDomainService).validateAmount(amount);
@@ -164,7 +135,7 @@ public class MakePaymentUseCaseImplTest extends BaseUnitTest {
         MakePaymentResult result = useCase.execute(command);
 
         assertEquals(existingPayment.getId(), result.paymentId());
-        assertEquals(PaymentStatus.PAID.name(), result.status());
+        assertEquals("PAID", result.status());
 
         verify(reservationConfirmationService, never()).confirm(any());
         verify(paymentRepositoryPort, never()).save(any(Payment.class));
@@ -175,12 +146,7 @@ public class MakePaymentUseCaseImplTest extends BaseUnitTest {
     void execute_duplicateDifferentRequest() {
         UUID reservationId = fixedUUID();
         int amount = 10000;
-        Payment existingPayment = Payment.builder()
-                .id(UUID.randomUUID())
-                .amount(amount)
-                .method(PaymentMethod.CARD)
-                .status(PaymentStatus.PAID)
-                .build();
+        Payment existingPayment = PaymentFixture.paidRequest(UUID.randomUUID(), amount, PaymentMethod.CARD);
         MakePaymentCommand command = new MakePaymentCommand(reservationId, amount + 1, PaymentMethod.CARD);
 
         doNothing().when(paymentDomainService).validateAmount(amount + 1);
