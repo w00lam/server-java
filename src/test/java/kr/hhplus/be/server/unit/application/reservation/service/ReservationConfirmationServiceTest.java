@@ -17,8 +17,13 @@ import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 
+import java.time.Clock;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -29,6 +34,9 @@ public class ReservationConfirmationServiceTest extends BaseUnitTest {
 
     @Mock
     DomainEventPublisher eventPublisher;
+
+    @Mock
+    Clock clock;
 
     @InjectMocks
     ReservationConfirmationService service;
@@ -54,7 +62,8 @@ public class ReservationConfirmationServiceTest extends BaseUnitTest {
                 .confirmedAt(fixedNow())
                 .build();
 
-        when(reservationRepository.confirmIfNotExpired(fixedUUID2())).thenReturn(true);
+        freezeClock();
+        when(reservationRepository.confirmIfNotExpired(fixedUUID2(), fixedNow())).thenReturn(true);
         when(reservationRepository.findById(fixedUUID2())).thenReturn(reservation);
 
         Reservation result = service.confirm(fixedUUID2());
@@ -72,11 +81,17 @@ public class ReservationConfirmationServiceTest extends BaseUnitTest {
 
     @Test
     void confirm_doesNotPublishWhenReservationCannotBeConfirmed() {
-        when(reservationRepository.confirmIfNotExpired(fixedUUID())).thenReturn(false);
+        freezeClock();
+        when(reservationRepository.confirmIfNotExpired(fixedUUID(), fixedNow())).thenReturn(false);
 
         assertThatThrownBy(() -> service.confirm(fixedUUID()))
                 .isInstanceOf(BusinessRuleViolationException.class);
 
-        verify(eventPublisher, never()).publish(org.mockito.Mockito.any());
+        verify(eventPublisher, never()).publish(any());
+    }
+
+    private void freezeClock() {
+        when(clock.instant()).thenReturn(fixedNow().toInstant(ZoneOffset.UTC));
+        when(clock.getZone()).thenReturn(ZoneOffset.UTC);
     }
 }

@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
+import java.time.LocalDateTime;
 /**
  * Provides application service behavior for the reservation feature.
  */
@@ -32,12 +33,13 @@ public class ReservationTxService {
 
     @Transactional
     public MakeReservationResult reserve(MakeReservationCommand command) {
+        LocalDateTime now = LocalDateTime.now(clock);
         User user = userRepositoryPort.findById(command.userId());
         Seat seat = seatRepositoryPort.findById(command.seatId());
 
 
         // Active holds are the only records that should block a new temporary reservation.
-        if (reservationRepositoryPort.existsActiveReservationBySeat(seat)) {
+        if (reservationRepositoryPort.existsActiveReservationBySeat(seat, now)) {
             throw new BusinessRuleViolationException(ErrorCode.SEAT_ALREADY_RESERVED, "이미 예약 중인 좌석입니다.");
         }
 

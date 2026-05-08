@@ -9,6 +9,8 @@ import kr.hhplus.be.server.reservation.domain.model.Reservation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.Clock;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Service
@@ -19,9 +21,11 @@ public class ReservationConfirmationService {
 
     private final ReservationRepositoryPort reservationRepository;
     private final DomainEventPublisher eventPublisher;
+    private final Clock clock;
 
     public Reservation confirm(UUID reservationId) {
-        boolean success = reservationRepository.confirmIfNotExpired(reservationId);
+        LocalDateTime now = LocalDateTime.now(clock);
+        boolean success = reservationRepository.confirmIfNotExpired(reservationId, now);
 
         if (!success) {
             throw new BusinessRuleViolationException(

@@ -3,6 +3,7 @@ package kr.hhplus.be.server.reservation.application.port.out;
 import kr.hhplus.be.server.concert.domain.model.seat.Seat;
 import kr.hhplus.be.server.reservation.domain.model.Reservation;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 /**
  * Defines the output port for reservation persistence.
@@ -11,9 +12,9 @@ import java.util.UUID;
 public interface ReservationRepositoryPort {
     Reservation findById(UUID reservationId);
 
-    boolean confirmIfNotExpired(UUID reservationId);
+    boolean confirmIfNotExpired(UUID reservationId, LocalDateTime now);
 
     Reservation save(Reservation reservation);
 
-    boolean existsActiveReservationBySeat(Seat seat);
+    boolean existsActiveReservationBySeat(Seat seat, LocalDateTime now);
 }
