@@ -18,12 +18,7 @@ public class SeatTest extends BaseUnitTest {
         // given
         Concert concert = Concert.create("Test Concert", "Test Description");
 
-        ConcertDate concertDate = ConcertDate.builder()
-                .id(fixedUUID())
-                .concert(concert)
-                .eventDate(LocalDate.of(2025, 12, 25))
-                .deleted(false)
-                .build();
+        ConcertDate concertDate = ConcertDate.create(concert, LocalDate.of(2025, 12, 25));
 
         // when
         Seat seat = Seat.create(concertDate, "A", "1", "01", "VIP");

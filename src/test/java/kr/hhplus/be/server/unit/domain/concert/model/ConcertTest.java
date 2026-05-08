@@ -5,6 +5,8 @@ import kr.hhplus.be.server.concert.domain.model.Concert;
 import kr.hhplus.be.server.concert.domain.model.ConcertDate;
 import org.junit.jupiter.api.*;
 
+import java.time.LocalDate;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 public class ConcertTest extends BaseUnitTest {
@@ -34,9 +36,7 @@ public class ConcertTest extends BaseUnitTest {
         // given
         Concert concert = Concert.create("Test Concert", "Test Description");
 
-        ConcertDate concertDate = ConcertDate.builder()
-                .id(fixedUUID())
-                .build();
+        ConcertDate concertDate = ConcertDate.create(concert, LocalDate.now());
 
         // when: add
         concert.addDate(concertDate);

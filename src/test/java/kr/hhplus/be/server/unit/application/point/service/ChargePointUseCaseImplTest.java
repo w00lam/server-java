@@ -48,11 +48,7 @@ public class ChargePointUseCaseImplTest extends BaseUnitTest {
                 .points(1000)
                 .build();
 
-        Point createdPoint = Point.builder()
-                .id(fixedUUID())
-                .amount(amount)
-                .user(user)
-                .build();
+        Point createdPoint = Point.createCharge(user, amount);
 
         when(userRepositoryPort.findById(userId)).thenReturn(user);
         when(pointDomainService.createCharge(user, amount)).thenReturn(createdPoint);

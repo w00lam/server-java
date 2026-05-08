@@ -15,7 +15,7 @@ public class PointDomainServiceTest extends BaseUnitTest {
     @Test
     @DisplayName("createCharge: 양수 금액은 정상 생성")
     void createCharge_valid() {
-        User user = User.builder().id(fixedUUID()).build();
+        User user = User.create("point-service@example.com", "point tester");
         Point point = service.createCharge(user, 1000);
 
         assertNotNull(point);
@@ -28,7 +28,7 @@ public class PointDomainServiceTest extends BaseUnitTest {
     @Test
     @DisplayName("createCharge: 0 이하 금액은 예외 발생")
     void createCharge_invalid() {
-        User user = User.builder().id(fixedUUID()).build();
+        User user = User.create("point-service-invalid@example.com", "point tester");
 
         assertThrows(IllegalArgumentException.class, () -> service.createCharge(user, 0));
         assertThrows(IllegalArgumentException.class, () -> service.createCharge(user, -100));

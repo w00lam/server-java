@@ -17,6 +17,8 @@ import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 
+import java.time.LocalDate;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.*;
@@ -37,7 +39,7 @@ public class CancelReservationUseCaseImplTest extends BaseUnitTest {
     void 확정된_예약을_취소하면_콘서트_예약_취소_이벤트가_발행된다() {
         // given
         Concert concert = Concert.builder().id(fixedUUID()).build();
-        ConcertDate concertDate = ConcertDate.builder().concert(concert).build();
+        ConcertDate concertDate = ConcertDate.create(concert, LocalDate.now());
         Seat seat = Seat.builder().concertDate(concertDate).build();
 
         Reservation reservation = Reservation.builder()
