@@ -37,9 +37,7 @@ public class PaymentConcurrencyIntegrationTest extends ReservationIntegrationTes
                 return Optional.<UUID>empty();
             }
         });
-        var successfulPaymentIds = result.successes().stream()
-                .flatMap(Optional::stream)
-                .toList();
+        var successfulPaymentIds = result.flatMapSuccesses(Optional::stream);
 
         em.clear();
 

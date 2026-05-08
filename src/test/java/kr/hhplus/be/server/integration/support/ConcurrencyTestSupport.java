@@ -6,7 +6,9 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 public final class ConcurrencyTestSupport {
     private ConcurrencyTestSupport() {
@@ -54,6 +56,12 @@ public final class ConcurrencyTestSupport {
             return successes.stream()
                     .filter(predicate)
                     .count();
+        }
+
+        public <R> List<R> flatMapSuccesses(Function<? super T, ? extends Stream<? extends R>> mapper) {
+            return successes.stream()
+                    .flatMap(mapper)
+                    .toList();
         }
     }
 }
