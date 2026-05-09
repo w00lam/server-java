@@ -7,7 +7,6 @@ import jakarta.validation.Valid;
 import kr.hhplus.be.server.common.presentation.ApiResponse;
 import kr.hhplus.be.server.reservation.application.port.in.ConfirmReservationCommand;
 import kr.hhplus.be.server.reservation.application.port.in.ConfirmReservationUseCase;
-import kr.hhplus.be.server.reservation.application.port.in.MakeReservationCommand;
 import kr.hhplus.be.server.reservation.application.port.in.MakeReservationUseCase;
 import kr.hhplus.be.server.reservation.presentation.dto.ConfirmReservationResponse;
 import kr.hhplus.be.server.reservation.presentation.dto.MakeReservationRequest;
@@ -21,10 +20,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.UUID;
+
 /**
  * Handles HTTP requests for the reservation feature.
  */
-
 @RestController
 @RequestMapping("/reservations")
 @RequiredArgsConstructor
@@ -35,8 +34,10 @@ public class ReservationController {
 
     @PostMapping
     @Operation(summary = "좌석 예약", description = "사용자, 콘서트, 좌석 정보를 기반으로 임시 예약을 생성합니다.")
-    public ResponseEntity<ApiResponse<MakeReservationResponse>> makeReservation(@Valid @RequestBody MakeReservationRequest request) {
-        var result = makeReservationUseCase.execute(new MakeReservationCommand(request.userId(), request.concertId(), request.seatId()));
+    public ResponseEntity<ApiResponse<MakeReservationResponse>> makeReservation(
+            @Valid @RequestBody MakeReservationRequest request
+    ) {
+        var result = makeReservationUseCase.execute(request.toCommand());
         var response = MakeReservationResponse.from(result);
 
         return ResponseEntity.ok(ApiResponse.ok(response));
