@@ -7,10 +7,10 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
-/**
- * Listens to reservation event events and triggers follow-up processing.
- */
 
+/**
+ * Forwards committed reservation confirmation events to external message infrastructure.
+ */
 @Component
 @RequiredArgsConstructor
 public class ReservationConfirmedEventListener {
@@ -19,7 +19,6 @@ public class ReservationConfirmedEventListener {
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handle(ReservationConfirmedEvent event) {
-        // Publish only committed reservations to Kafka so downstream systems never observe rolled-back data.
         reservationEventProducerPort.sendConfirmedEvent(event);
     }
 }

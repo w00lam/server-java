@@ -5,10 +5,10 @@ import kr.hhplus.be.server.reservation.application.event.ReservationConfirmedEve
 import lombok.RequiredArgsConstructor;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
-/**
- * Publishes reservation event messages through the configured messaging infrastructure.
- */
 
+/**
+ * Publishes reservation events to Kafka.
+ */
 @Component
 @RequiredArgsConstructor
 public class KafkaReservationEventProducer implements ReservationEventProducerPort {
@@ -18,7 +18,6 @@ public class KafkaReservationEventProducer implements ReservationEventProducerPo
 
     @Override
     public void sendConfirmedEvent(ReservationConfirmedEvent event) {
-        // Use reservation id as the key so duplicate messages for the same reservation stay ordered.
         kafkaTemplate.send(TOPIC, String.valueOf(event.reservationId()), event);
     }
 }
