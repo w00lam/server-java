@@ -1,20 +1,15 @@
 package kr.hhplus.be.server.integration.reservation;
 
 import kr.hhplus.be.server.common.exception.BusinessRuleViolationException;
-import kr.hhplus.be.server.concert.domain.model.Concert;
-import kr.hhplus.be.server.concert.domain.model.ConcertDate;
-import kr.hhplus.be.server.concert.domain.model.seat.Seat;
 import kr.hhplus.be.server.integration.ReservationIntegrationTestBase;
 import kr.hhplus.be.server.integration.support.ConcurrencyTestSupport;
 import kr.hhplus.be.server.payment.application.port.in.MakePaymentCommand;
-import kr.hhplus.be.server.payment.domain.model.PaymentMethod;
 import kr.hhplus.be.server.reservation.domain.model.ReservationStatus;
 import kr.hhplus.be.server.user.domain.model.User;
 import org.junit.jupiter.api.Test;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -25,8 +20,8 @@ public class PaymentConcurrencyIntegrationTest extends ReservationIntegrationTes
     @Test
     void concurrentSamePaymentRequest_createsOnePaymentAndDeductsPointsOnce() throws Exception {
         User user = createUserWithPoints(10_000);
-        UUID reservationId = createReservation(user);
-        MakePaymentCommand command = new MakePaymentCommand(reservationId, 5_000, PaymentMethod.CARD);
+        UUID reservationId = createReservedSeatId(user, "payment concurrency concert");
+        MakePaymentCommand command = cardPaymentCommand(reservationId, 5_000);
 
         int threadCount = 5;
         var result = ConcurrencyTestSupport.runConcurrently(threadCount, index -> {
@@ -47,19 +42,5 @@ public class PaymentConcurrencyIntegrationTest extends ReservationIntegrationTes
         assertThat(countPaymentsByReservationId(reservationId)).isEqualTo(1);
         assertThat(userRepository.findById(user.getId()).getPoints()).isEqualTo(5_000);
         assertThat(reservationRepository.findById(reservationId).getStatus()).isEqualTo(ReservationStatus.CONFIRMED);
-    }
-
-    private UUID createReservation(User user) {
-        Concert concert = concertRepository.save(
-                Concert.builder()
-                        .title("payment concurrency concert")
-                        .build()
-        );
-        ConcertDate concertDate = concertDateRepository.save(
-                ConcertDate.create(concert, LocalDate.now())
-        );
-        Seat seat = createSeatWithConcert(concertDate, "A", "1", "1", "VIP");
-
-        return reserveSeat(user.getId(), concert.getId(), seat.getId()).reservationId();
     }
 }

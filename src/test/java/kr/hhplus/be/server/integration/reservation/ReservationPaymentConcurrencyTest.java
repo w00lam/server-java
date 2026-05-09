@@ -4,9 +4,7 @@ import kr.hhplus.be.server.common.exception.BusinessRuleViolationException;
 import kr.hhplus.be.server.concert.domain.model.seat.Seat;
 import kr.hhplus.be.server.integration.ReservationIntegrationTestBase;
 import kr.hhplus.be.server.integration.support.ConcurrencyTestSupport;
-import kr.hhplus.be.server.payment.application.port.in.MakePaymentCommand;
 import kr.hhplus.be.server.payment.domain.model.PaymentMethod;
-import kr.hhplus.be.server.reservation.application.port.in.MakeReservationCommand;
 import kr.hhplus.be.server.reservation.domain.model.ReservationStatus;
 import kr.hhplus.be.server.user.domain.model.User;
 import org.junit.jupiter.api.Test;
@@ -36,12 +34,8 @@ public class ReservationPaymentConcurrencyTest extends ReservationIntegrationTes
         var result = ConcurrencyTestSupport.runConcurrently(threadCount, index -> {
             User user = users.get(index);
             try {
-                var reservation = makeReservationUseCase.execute(
-                        new MakeReservationCommand(user.getId(), concertId, seatId)
-                );
-                makePaymentUseCase.execute(
-                        new MakePaymentCommand(reservation.reservationId(), 500, PaymentMethod.CARD)
-                );
+                var reservation = reserveSeat(user.getId(), concertId, seatId);
+                payReservation(reservation.reservationId(), 500, PaymentMethod.CARD);
 
                 return Optional.of(reservation.reservationId());
             } catch (BusinessRuleViolationException expectedRaceLoss) {

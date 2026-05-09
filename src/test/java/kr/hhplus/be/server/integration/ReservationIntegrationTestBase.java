@@ -94,7 +94,7 @@ public abstract class ReservationIntegrationTestBase {
         return seatRepository.save(seat);
     }
 
-    protected UUID createReservedSeat(User user, String concertTitle) {
+    protected ReservedSeat createReservedSeat(User user, String concertTitle) {
         Concert concert = concertRepository.save(
                 Concert.builder()
                         .title(concertTitle)
@@ -104,8 +104,13 @@ public abstract class ReservationIntegrationTestBase {
                 ConcertDate.create(concert, LocalDate.now())
         );
         Seat seat = createSeatWithConcert(concertDate, "A", "1", "1", "VIP");
+        UUID reservationId = reserveSeat(user.getId(), concert.getId(), seat.getId()).reservationId();
 
-        return reserveSeat(user.getId(), concert.getId(), seat.getId()).reservationId();
+        return new ReservedSeat(reservationId, concert.getId(), seat.getId());
+    }
+
+    protected UUID createReservedSeatId(User user, String concertTitle) {
+        return createReservedSeat(user, concertTitle).reservationId();
     }
 
     protected MakeReservationResult reserveSeat(UUID userId, UUID concertId, UUID seatId) {
@@ -142,5 +147,8 @@ public abstract class ReservationIntegrationTestBase {
                         """, Long.class)
                 .setParameter("reservationId", reservationId)
                 .getSingleResult();
+    }
+
+    protected record ReservedSeat(UUID reservationId, UUID concertId, UUID seatId) {
     }
 }

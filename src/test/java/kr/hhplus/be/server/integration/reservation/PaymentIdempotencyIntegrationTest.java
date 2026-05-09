@@ -81,6 +81,6 @@ public class PaymentIdempotencyIntegrationTest extends ReservationIntegrationTes
     }
 
     private UUID createPaymentIdempotencyReservation(User user) {
-        return createReservedSeat(user, "payment idempotency concert");
+        return createReservedSeatId(user, "payment idempotency concert");
     }
 }

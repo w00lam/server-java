@@ -5,7 +5,6 @@ import kr.hhplus.be.server.integration.support.ConcurrencyTestSupport;
 import kr.hhplus.be.server.point.application.port.in.DeductPointCommand;
 import kr.hhplus.be.server.point.application.port.in.DeductPointUseCase;
 import kr.hhplus.be.server.user.domain.model.User;
-import kr.hhplus.be.server.user.infrastructure.persistence.UserRepositoryImpl;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,25 +19,13 @@ public class PointDeductOptimisticLockTest extends ReservationIntegrationTestBas
     @Autowired
     DeductPointUseCase deductPointUseCase;
 
-    @Autowired
-    UserRepositoryImpl userRepository;
-
     @Test
-    @DisplayName("동일 사용자 포인트를 동시에 차감하면 1건만 성공하고 나머지는 실패한다 (낙관적 락)")
+    @DisplayName("동일 사용자의 포인트를 동시에 차감하면 1건만 성공한다 (낙관적 락)")
     void deduct_point_concurrently_with_optimistic_lock() throws Exception {
-        User user = User.builder()
-                .name("test")
-                .email("test@test.com")
-                .points(1000000)
-                .build();
+        User user = createUserWithPoints(1_000_000);
+        DeductPointCommand command = new DeductPointCommand(user.getId(), 100);
 
-        userRepository.save(user);
-
-        int threadCount = 3;
-        DeductPointCommand command =
-                new DeductPointCommand(user.getId(), 100);
-
-        var result = ConcurrencyTestSupport.runConcurrently(threadCount, index -> {
+        var result = ConcurrencyTestSupport.runConcurrently(3, index -> {
             try {
                 deductPointUseCase.execute(command);
                 return true;
@@ -50,7 +37,7 @@ public class PointDeductOptimisticLockTest extends ReservationIntegrationTestBas
         User savedUser = userRepository.findById(user.getId());
 
         assertThat(result.failures()).isEmpty();
-        assertThat(result.successes()).containsExactlyInAnyOrder(true, false, false);
-        assertThat(savedUser.getPoints()).isEqualTo(1000000 - 100);
+        assertThat(result.matchingSuccessCount(Boolean::booleanValue)).isEqualTo(1);
+        assertThat(savedUser.getPoints()).isEqualTo(999_900);
     }
 }
