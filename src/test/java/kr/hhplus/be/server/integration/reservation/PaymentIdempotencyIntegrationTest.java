@@ -2,17 +2,12 @@ package kr.hhplus.be.server.integration.reservation;
 
 import kr.hhplus.be.server.common.exception.BusinessRuleViolationException;
 import kr.hhplus.be.server.common.exception.ErrorCode;
-import kr.hhplus.be.server.concert.domain.model.Concert;
-import kr.hhplus.be.server.concert.domain.model.ConcertDate;
-import kr.hhplus.be.server.concert.domain.model.seat.Seat;
 import kr.hhplus.be.server.integration.ReservationIntegrationTestBase;
 import kr.hhplus.be.server.payment.application.port.in.MakePaymentCommand;
-import kr.hhplus.be.server.payment.domain.model.PaymentMethod;
 import kr.hhplus.be.server.reservation.domain.model.ReservationStatus;
 import kr.hhplus.be.server.user.domain.model.User;
 import org.junit.jupiter.api.Test;
 
-import java.time.LocalDate;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -22,8 +17,8 @@ public class PaymentIdempotencyIntegrationTest extends ReservationIntegrationTes
     @Test
     void samePaymentRequest_returnsExistingPayment() {
         User user = createUserWithPoints(10_000);
-        UUID reservationId = createReservation(user);
-        MakePaymentCommand command = new MakePaymentCommand(reservationId, 5_000, PaymentMethod.CARD);
+        UUID reservationId = createPaymentIdempotencyReservation(user);
+        MakePaymentCommand command = cardPaymentCommand(reservationId, 5_000);
 
         var first = makePaymentUseCase.execute(command);
         var second = makePaymentUseCase.execute(command);
@@ -39,12 +34,12 @@ public class PaymentIdempotencyIntegrationTest extends ReservationIntegrationTes
     @Test
     void differentDuplicatePaymentRequest_isRejected() {
         User user = createUserWithPoints(10_000);
-        UUID reservationId = createReservation(user);
+        UUID reservationId = createPaymentIdempotencyReservation(user);
 
-        makePaymentUseCase.execute(new MakePaymentCommand(reservationId, 5_000, PaymentMethod.CARD));
+        makePaymentUseCase.execute(cardPaymentCommand(reservationId, 5_000));
 
         assertThatThrownBy(() ->
-                makePaymentUseCase.execute(new MakePaymentCommand(reservationId, 6_000, PaymentMethod.CARD))
+                makePaymentUseCase.execute(cardPaymentCommand(reservationId, 6_000))
         ).isInstanceOfSatisfying(BusinessRuleViolationException.class, exception ->
                 assertThat(exception.errorCode()).isEqualTo(ErrorCode.PAYMENT_ALREADY_PROCESSED)
         );
@@ -58,9 +53,9 @@ public class PaymentIdempotencyIntegrationTest extends ReservationIntegrationTes
     @Test
     void successfulPayment_deductsPointsAndConfirmsReservation() {
         User user = createUserWithPoints(10_000);
-        UUID reservationId = createReservation(user);
+        UUID reservationId = createPaymentIdempotencyReservation(user);
 
-        makePaymentUseCase.execute(new MakePaymentCommand(reservationId, 5_000, PaymentMethod.CARD));
+        makePaymentUseCase.execute(cardPaymentCommand(reservationId, 5_000));
 
         em.clear();
         assertThat(userRepository.findById(user.getId()).getPoints()).isEqualTo(5_000);
@@ -71,10 +66,10 @@ public class PaymentIdempotencyIntegrationTest extends ReservationIntegrationTes
     @Test
     void insufficientPoints_doesNotConfirmReservationOrCreatePayment() {
         User user = createUserWithPoints(1_000);
-        UUID reservationId = createReservation(user);
+        UUID reservationId = createPaymentIdempotencyReservation(user);
 
         assertThatThrownBy(() ->
-                makePaymentUseCase.execute(new MakePaymentCommand(reservationId, 5_000, PaymentMethod.CARD))
+                makePaymentUseCase.execute(cardPaymentCommand(reservationId, 5_000))
         ).isInstanceOfSatisfying(BusinessRuleViolationException.class, exception ->
                 assertThat(exception.errorCode()).isEqualTo(ErrorCode.INSUFFICIENT_POINTS)
         );
@@ -85,17 +80,7 @@ public class PaymentIdempotencyIntegrationTest extends ReservationIntegrationTes
         assertThat(countPaymentsByReservationId(reservationId)).isEqualTo(0);
     }
 
-    private UUID createReservation(User user) {
-        Concert concert = concertRepository.save(
-                Concert.builder()
-                        .title("payment idempotency concert")
-                        .build()
-        );
-        ConcertDate concertDate = concertDateRepository.save(
-                ConcertDate.create(concert, LocalDate.now())
-        );
-        Seat seat = createSeatWithConcert(concertDate, "A", "1", "1", "VIP");
-
-        return reserveSeat(user.getId(), concert.getId(), seat.getId()).reservationId();
+    private UUID createPaymentIdempotencyReservation(User user) {
+        return createReservedSeat(user, "payment idempotency concert");
     }
 }

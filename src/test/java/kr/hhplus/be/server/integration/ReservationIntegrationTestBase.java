@@ -1,28 +1,26 @@
 package kr.hhplus.be.server.integration;
 
-
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
-import kr.hhplus.be.server.payment.application.port.in.MakePaymentCommand;
-import kr.hhplus.be.server.payment.application.port.in.MakePaymentResult;
-import kr.hhplus.be.server.payment.application.port.in.MakePaymentUseCase;
-import kr.hhplus.be.server.reservation.application.port.in.MakeReservationCommand;
-import kr.hhplus.be.server.reservation.application.port.in.MakeReservationResult;
-import kr.hhplus.be.server.reservation.application.port.in.MakeReservationUseCase;
 import kr.hhplus.be.server.TestcontainersConfiguration;
 import kr.hhplus.be.server.concert.domain.model.Concert;
 import kr.hhplus.be.server.concert.domain.model.ConcertDate;
 import kr.hhplus.be.server.concert.domain.model.seat.Seat;
-import kr.hhplus.be.server.payment.domain.model.PaymentMethod;
-import kr.hhplus.be.server.reservation.domain.model.ReservationStatus;
-import kr.hhplus.be.server.user.domain.model.User;
-
 import kr.hhplus.be.server.concert.infrastructure.persistence.ConcertDateRepositoryImpl;
 import kr.hhplus.be.server.concert.infrastructure.persistence.ConcertRepositoryImpl;
 import kr.hhplus.be.server.concert.infrastructure.persistence.SeatRepositoryImpl;
+import kr.hhplus.be.server.payment.application.port.in.MakePaymentCommand;
+import kr.hhplus.be.server.payment.application.port.in.MakePaymentResult;
+import kr.hhplus.be.server.payment.application.port.in.MakePaymentUseCase;
+import kr.hhplus.be.server.payment.domain.model.PaymentMethod;
 import kr.hhplus.be.server.payment.infrastructure.persistence.PaymentRepositoryImpl;
 import kr.hhplus.be.server.point.infrastructure.persistence.PointRepositoryImpl;
+import kr.hhplus.be.server.reservation.application.port.in.MakeReservationCommand;
+import kr.hhplus.be.server.reservation.application.port.in.MakeReservationResult;
+import kr.hhplus.be.server.reservation.application.port.in.MakeReservationUseCase;
+import kr.hhplus.be.server.reservation.domain.model.ReservationStatus;
 import kr.hhplus.be.server.reservation.infrastructure.persistence.ReservationRepositoryImpl;
+import kr.hhplus.be.server.user.domain.model.User;
 import kr.hhplus.be.server.user.infrastructure.persistence.UserRepositoryImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -36,22 +34,12 @@ import java.util.UUID;
 @ActiveProfiles("test")
 @ContextConfiguration(initializers = TestcontainersConfiguration.Initializer.class)
 public abstract class ReservationIntegrationTestBase {
-    /*
-     * ================
-     *   USE CASES
-     * ================
-     */
     @Autowired
     protected MakeReservationUseCase makeReservationUseCase;
 
     @Autowired
     protected MakePaymentUseCase makePaymentUseCase;
 
-    /*
-     * =========================
-     *     INFRA REPOSITORIES
-     * =========================
-     */
     @Autowired
     protected UserRepositoryImpl userRepository;
 
@@ -76,77 +64,62 @@ public abstract class ReservationIntegrationTestBase {
     @PersistenceContext
     protected EntityManager em;
 
-    /*
-     * =========================
-     *    HELPER: CREATE USER
-     * =========================
-     */
     protected User createUser() {
         User user = User.create("test-user-" + UUID.randomUUID() + "@example.com", "nickname");
-
-
-        User saved = userRepository.save(user);
-
-        return saved;
+        return userRepository.save(user);
     }
 
     protected User createUserWithPoints(int points) {
         User user = User.create("test-user-" + UUID.randomUUID() + "@example.com", "tester");
         user.addPoints(points);
-
-        User saved = userRepository.save(user);
-
-        return saved;
+        return userRepository.save(user);
     }
 
-    /*
-     * =========================
-     *    HELPER: CREATE Seat
-     * =========================
-     */
     protected Seat createSeat() {
         Concert concert = concertRepository.save(
                 Concert.builder()
-                        .title("테스트 콘서트")
+                        .title("test concert")
                         .build()
         );
-
         ConcertDate concertDate = concertDateRepository.save(
                 ConcertDate.create(concert, LocalDate.now())
         );
-
         Seat seat = Seat.create(concertDate, "A", "1", "1", "VIP");
 
-        Seat saved = seatRepository.save(seat);
-
-        return saved;
+        return seatRepository.save(seat);
     }
 
     protected Seat createSeatWithConcert(ConcertDate concertDate, String section, String row, String number, String grade) {
         Seat seat = Seat.create(concertDate, section, row, number, grade);
-        Seat saved = seatRepository.save(seat);
-
-        return saved;
+        return seatRepository.save(seat);
     }
 
-    /*
-     * =============================================
-     *     HELPER: MAKE RESERVATION → RETURN RESULT
-     * =============================================
-     */
-    protected MakeReservationResult reserveSeat(UUID userId, UUID concertId,UUID seatId) {
-        MakeReservationCommand cmd = new MakeReservationCommand(userId, concertId, seatId);
-        return makeReservationUseCase.execute(cmd);
+    protected UUID createReservedSeat(User user, String concertTitle) {
+        Concert concert = concertRepository.save(
+                Concert.builder()
+                        .title(concertTitle)
+                        .build()
+        );
+        ConcertDate concertDate = concertDateRepository.save(
+                ConcertDate.create(concert, LocalDate.now())
+        );
+        Seat seat = createSeatWithConcert(concertDate, "A", "1", "1", "VIP");
+
+        return reserveSeat(user.getId(), concert.getId(), seat.getId()).reservationId();
     }
 
-    /*
-     * =============================================
-     *     HELPER: MAKE PAYMENT → RETURN RESULT
-     * =============================================
-     */
+    protected MakeReservationResult reserveSeat(UUID userId, UUID concertId, UUID seatId) {
+        MakeReservationCommand command = new MakeReservationCommand(userId, concertId, seatId);
+        return makeReservationUseCase.execute(command);
+    }
+
     protected MakePaymentResult payReservation(UUID reservationId, int amount, PaymentMethod method) {
-        MakePaymentCommand cmd = new MakePaymentCommand(reservationId, amount, method);
-        return makePaymentUseCase.execute(cmd);
+        MakePaymentCommand command = new MakePaymentCommand(reservationId, amount, method);
+        return makePaymentUseCase.execute(command);
+    }
+
+    protected MakePaymentCommand cardPaymentCommand(UUID reservationId, int amount) {
+        return new MakePaymentCommand(reservationId, amount, PaymentMethod.CARD);
     }
 
     protected long countReservationsBySeatAndStatus(Seat seat, ReservationStatus status) {
