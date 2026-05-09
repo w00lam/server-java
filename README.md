@@ -4,7 +4,7 @@
 
 콘서트 티켓팅 도메인의 좌석 선점, 결제 멱등성, 대기열, 이벤트 후속 처리를 다루는 Spring Boot 서버입니다. 단순 CRUD보다 **동시성 제어**, **트랜잭션 정합성**, **Redis/Kafka 기반 인프라 연동**, **테스트 가능한 구조**에 초점을 맞췄습니다.
 
-## Portfolio Summary
+## Technical Overview
 
 이 프로젝트는 티켓 오픈처럼 짧은 시간에 요청이 몰리는 상황을 가정합니다. 핵심 목표는 같은 좌석이 중복 예약되거나, 같은 예약이 중복 결제되거나, 롤백된 예약 이벤트가 외부 시스템에 전달되는 일을 막는 것입니다.
 
@@ -156,7 +156,7 @@ docker compose up -d
 
 ## Documentation
 
-- [Portfolio Refactoring Notes](docs/portfolio-refactoring-notes.md)
+- [Refactoring Notes](docs/portfolio-refactoring-notes.md)
 - [API Response Policy](docs/api-response-policy.md)
 - [ERD](docs/erd.md)
 - [Reservation Scenario](docs/ssd.md)
